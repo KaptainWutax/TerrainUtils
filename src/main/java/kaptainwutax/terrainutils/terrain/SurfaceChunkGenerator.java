@@ -43,9 +43,9 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
                                  NoiseSettings noiseSettings,
                                  boolean useSimplexNoise) {
         super(biomeSource);
-        this.chunkHeight = verticalNoiseResolution*4;
-        this.chunkWidth = horizontalNoiseResolution*4;
-        this.noiseSettings=noiseSettings;
+        this.chunkHeight = verticalNoiseResolution * 4;
+        this.chunkWidth = horizontalNoiseResolution * 4;
+        this.noiseSettings = noiseSettings;
         this.noiseSizeX = 16 / this.chunkWidth;
         this.noiseSizeY = worldHeight / this.chunkHeight;
         this.noiseSizeZ = 16 / this.chunkWidth;
@@ -67,10 +67,10 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
     }
 
     private double sampleNoise(int x, int y, int z) {
-        double xzScale=684.412*noiseSettings.samplingSettings.xzScale;
-        double yScale=684.412*noiseSettings.samplingSettings.yScale;
-        double xzStep=xzScale/noiseSettings.samplingSettings.xzFactor;
-        double yStep=yScale/noiseSettings.samplingSettings.yFactor;
+        double xzScale = 684.412 * noiseSettings.samplingSettings.xzScale;
+        double yScale = 684.412 * noiseSettings.samplingSettings.yScale;
+        double xzStep = xzScale / noiseSettings.samplingSettings.xzFactor;
+        double yStep = yScale / noiseSettings.samplingSettings.yFactor;
 
         double minNoise = 0.0D;
         double maxNoise = 0.0D;
@@ -98,7 +98,7 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         return clampedLerp(minNoise / 512.0D, maxNoise / 512.0D, (mainNoise / 10.0D + 1.0D) / 2.0D);
     }
 
-    protected void sampleNoiseColumn(double[] buffer, int x, int z,  int i, int j) {
+    protected void sampleNoiseColumn(double[] buffer, int x, int z) {
         double[] ds = this.getScaleAndDepth(x, z);
         double scale = ds[0];
         double depth = ds[1];
@@ -107,10 +107,11 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         for (int y = 0; y < this.getNoiseSizeY(); ++y) {
             double noise = this.sampleNoise(x, y, z);
             noise -= this.computeNoiseFalloff(scale, depth, y);
+            // fixme 1.15+
             if ((double) y > sizeY) {
-                noise = clampedLerp(noise, j, ((double) y - sizeY) / (double) i);
+                noise = clampedLerp(noise, this.noiseSettings.topSlideSettings.target, ((double) (y - sizeY) - this.noiseSettings.topSlideSettings.offset) / (double) this.noiseSettings.topSlideSettings.size);
             } else if ((double) y < m) {
-                noise = clampedLerp(noise, -30.0D, (m - (double) y) / (m - 1.0D));
+                noise = clampedLerp(noise, this.noiseSettings.bottomSlideSettings.target, (m - (double) y) / (m - 1.0D));
             }
             buffer[y] = noise;
         }
@@ -169,21 +170,12 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         return 0;
     }
 
-
-    protected void sampleNoiseColumn(double[] buffer, int x, int z) {
-
-        this.sampleNoiseColumn(buffer, x, z,
-                3,
-                -10);
-    }
-
     protected double[] getScaleAndDepth(int x, int z) {
         double[] depthAndScale = new double[2];
         float weightedScale = 0.0F;
         float weightedDepth = 0.0F;
         float totalWeight = 0.0F;
         float depthAtCenter = this.biomeSource.getBiomeForNoiseGen(x, 0, z).getDepth();
-
         for (int rx = -2; rx <= 2; ++rx) {
             for (int rz = -2; rz <= 2; ++rz) {
                 Biome biome = this.biomeSource.getBiomeForNoiseGen(x + rx, 0, z + rz);
@@ -204,7 +196,6 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
                 totalWeight += weight;
             }
         }
-
         weightedScale /= totalWeight;
         weightedDepth /= totalWeight;
         weightedScale = weightedScale * 0.9F + 0.1F;
@@ -221,10 +212,17 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
 
     private double sampleNoise(int x, int y) {
         double noise = this.noiseSampler.sample(x * 200, 10.0D, y * 200, 1.0D, 0.0D, true) / 8000.0D;
+        /*
+         noise = noise < 0.0 ? -noise * 0.3 : noise;
+         noise = noise * 24.575625D - 2.0D;
+         if (noise < 0.0D) {
+             return noise * 0.009486607142857142D;
+         }
+         return Math.min(noise, 1.0D) * 0.006640625D;
+        */
         if (noise < 0.0D) {
             noise = -noise * 0.3D;
         }
-
         noise = noise * 3.0D - 2.0D;
         if (noise < 0.0D) {
             noise /= 28.0D;
@@ -234,17 +232,14 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
             }
             noise /= 40.0D;
         }
-
         return noise;
     }
 
-    protected double computeNoiseFalloff(double depth, double scale, int y){
+    protected double computeNoiseFalloff(double depth, double scale, int y) {
         double fallOff = ((double) y - (8.5D + depth * 8.5D / 8.0D * 4.0D)) * 12.0D * 128.0D / 256.0D / scale;
-
-        if(fallOff < 0.0D) {
+        if (fallOff < 0.0D) {
             fallOff *= 4.0D;
         }
-
         return fallOff;
     }
 
