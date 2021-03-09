@@ -9,6 +9,7 @@ import kaptainwutax.noiseutils.simplex.OctaveSimplexNoiseSampler;
 import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.seedutils.mc.ChunkRand;
 import kaptainwutax.seedutils.mc.MCVersion;
+import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,11 +20,12 @@ import static kaptainwutax.terrainutils.utils.MathHelper.sqrt;
 
 public abstract class SurfaceChunkGenerator extends ChunkGenerator {
 
-    private final int verticalNoiseResolution;
-    private final int horizontalNoiseResolution;
+    private final int chunkHeight;
+    private final int chunkWidth;
     private final int noiseSizeX;
     private final int noiseSizeY;
     private final int noiseSizeZ;
+    private final NoiseSettings noiseSettings;
     private final OctavePerlinNoiseSampler minLimitPerlinNoise;
     private final OctavePerlinNoiseSampler maxLimitPerlinNoise;
     private final OctavePerlinNoiseSampler mainPerlinNoise;
@@ -34,13 +36,19 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
 
     private final Map<Long, double[]> noiseColumnCache = new HashMap<>();
 
-    public SurfaceChunkGenerator(BiomeSource biomeSource, int horizontalNoiseResolution, int verticalNoiseResolution, int worldHeight, boolean useSimplexNoise) {
+    public SurfaceChunkGenerator(BiomeSource biomeSource,
+                                 int worldHeight,
+                                 int horizontalNoiseResolution,
+                                 int verticalNoiseResolution,
+                                 NoiseSettings noiseSettings,
+                                 boolean useSimplexNoise) {
         super(biomeSource);
-        this.verticalNoiseResolution = verticalNoiseResolution;
-        this.horizontalNoiseResolution = horizontalNoiseResolution;
-        this.noiseSizeX = 16 / this.horizontalNoiseResolution;
-        this.noiseSizeY = worldHeight / this.verticalNoiseResolution;
-        this.noiseSizeZ = 16 / this.horizontalNoiseResolution;
+        this.chunkHeight = verticalNoiseResolution*4;
+        this.chunkWidth = horizontalNoiseResolution*4;
+        this.noiseSettings=noiseSettings;
+        this.noiseSizeX = 16 / this.chunkWidth;
+        this.noiseSizeY = worldHeight / this.chunkHeight;
+        this.noiseSizeZ = 16 / this.chunkWidth;
         this.random = new ChunkRand(biomeSource.getWorldSeed());
         this.minLimitPerlinNoise = new OctavePerlinNoiseSampler(this.random, 16);
         this.maxLimitPerlinNoise = new OctavePerlinNoiseSampler(this.random, 16);
@@ -58,49 +66,53 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         return this.noiseSizeY + 1;
     }
 
-    private double sampleNoise(int x, int y, int z, double d, double e, double f, double g) {
-        double h = 0.0D;
-        double i = 0.0D;
-        double j = 0.0D;
-        double k = 1.0D;
+    private double sampleNoise(int x, int y, int z) {
+        double xzScale=684.412*noiseSettings.samplingSettings.xzScale;
+        double yScale=684.412*noiseSettings.samplingSettings.yScale;
+        double xzStep=xzScale/noiseSettings.samplingSettings.xzFactor;
+        double yStep=yScale/noiseSettings.samplingSettings.yFactor;
 
-        for (int l = 0; l < 16; ++l) {
-            double m = maintainPrecision((double) x * d * k);
-            double n = maintainPrecision((double) y * e * k);
-            double o = maintainPrecision((double) z * d * k);
-            double p = e * k;
-            h += this.minLimitPerlinNoise.getOctave(l).sample(m, n, o, p, (double) y * p) / k;
-            i += this.maxLimitPerlinNoise.getOctave(l).sample(m, n, o, p, (double) y * p) / k;
-            if (l < 8) {
-                j += this.mainPerlinNoise.getOctave(l).sample(
-                        maintainPrecision((double) x * f * k),
-                        maintainPrecision((double) y * g * k),
-                        maintainPrecision((double) z * f * k),
-                        g * k,
-                        (double) y * g * k) / k;
+        double minNoise = 0.0D;
+        double maxNoise = 0.0D;
+        double mainNoise = 0.0D;
+        double persistence = 1.0D;
+
+        for (int octave = 0; octave < 16; ++octave) {
+            double cellX = maintainPrecision((double) x * xzScale * persistence);
+            double cellY = maintainPrecision((double) y * yScale * persistence);
+            double cellZ = maintainPrecision((double) z * xzScale * persistence);
+            double sy = yScale * persistence;
+            minNoise += this.minLimitPerlinNoise.getOctave(octave).sample(cellX, cellY, cellZ, sy, (double) y * sy) / persistence;
+            maxNoise += this.maxLimitPerlinNoise.getOctave(octave).sample(cellX, cellY, cellZ, sy, (double) y * sy) / persistence;
+            if (octave < 8) {
+                mainNoise += this.mainPerlinNoise.getOctave(octave).sample(
+                        maintainPrecision((double) x * xzStep * persistence),
+                        maintainPrecision((double) y * yStep * persistence),
+                        maintainPrecision((double) z * xzStep * persistence),
+                        yStep * persistence,
+                        (double) y * yStep * persistence) / persistence;
             }
-            k /= 2.0D;
+            persistence /= 2.0D;
         }
 
-        return clampedLerp(h / 512.0D, i / 512.0D, (j / 10.0D + 1.0D) / 2.0D);
+        return clampedLerp(minNoise / 512.0D, maxNoise / 512.0D, (mainNoise / 10.0D + 1.0D) / 2.0D);
     }
 
-    protected void sampleNoiseColumn(double[] buffer, int x, int z, double d, double e, double f, double g, int i, int j) {
-        double[] ds = this.computeNoiseRange(x, z);
-        double h = ds[0];
-        double k = ds[1];
-        double scale = this.getNoiseSizeY() - 4;
+    protected void sampleNoiseColumn(double[] buffer, int x, int z,  int i, int j) {
+        double[] ds = this.getScaleAndDepth(x, z);
+        double scale = ds[0];
+        double depth = ds[1];
+        double sizeY = this.getNoiseSizeY() - 4;
         double m = 0.0D;
-
-        for (int ry = 0; ry < this.getNoiseSizeY(); ++ry) {
-            double noise = this.sampleNoise(x, ry, z, d, e, f, g);
-            noise -= this.computeNoiseFalloff(h, k, ry);
-            if ((double) ry > scale) {
-                noise = clampedLerp(noise, j, ((double) ry - scale) / (double) i);
-            } else if ((double) ry < m) {
-                noise = clampedLerp(noise, -30.0D, (m - (double) ry) / (m - 1.0D));
+        for (int y = 0; y < this.getNoiseSizeY(); ++y) {
+            double noise = this.sampleNoise(x, y, z);
+            noise -= this.computeNoiseFalloff(scale, depth, y);
+            if ((double) y > sizeY) {
+                noise = clampedLerp(noise, j, ((double) y - sizeY) / (double) i);
+            } else if ((double) y < m) {
+                noise = clampedLerp(noise, -30.0D, (m - (double) y) / (m - 1.0D));
             }
-            buffer[ry] = noise;
+            buffer[y] = noise;
         }
     }
 
@@ -119,13 +131,13 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
     @Override
     public int getHeightOnGround(int x, int z) {
         // those are the coordinates of the region in the grid chosen
-        int cellX = Math.floorDiv(x, this.horizontalNoiseResolution);
-        int cellZ = Math.floorDiv(z, this.horizontalNoiseResolution);
+        int cellX = Math.floorDiv(x, this.chunkWidth);
+        int cellZ = Math.floorDiv(z, this.chunkWidth);
         // those are the coordinates in the chosen region
-        int posX = Math.floorMod(x, this.horizontalNoiseResolution);
-        int posZ = Math.floorMod(z, this.horizontalNoiseResolution);
-        double percentX = (double) posX / (double) this.horizontalNoiseResolution;
-        double percentZ = (double) posZ / (double) this.horizontalNoiseResolution;
+        int posX = Math.floorMod(x, this.chunkWidth);
+        int posZ = Math.floorMod(z, this.chunkWidth);
+        double percentX = (double) posX / (double) this.chunkWidth;
+        double percentZ = (double) posZ / (double) this.chunkWidth;
         double[][] ds = new double[][] {
                 this.sampleNoiseColumn(cellX, cellZ),
                 this.sampleNoiseColumn(cellX, cellZ + 1),
@@ -143,11 +155,11 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
             double x1y1z = ds[2][cellY + 1];
             double x1y1z1 = ds[3][cellY + 1];
 
-            for (int posY = this.verticalNoiseResolution - 1; posY >= 0; --posY) {
-                double percentY = (double) posY / (double) this.verticalNoiseResolution;
+            for (int posY = this.chunkHeight - 1; posY >= 0; --posY) {
+                double percentY = (double) posY / (double) this.chunkHeight;
                 // this is not a bug, mojang does not respect order
                 double noise = MathHelper.lerp3(percentY, percentX, percentZ, xyz, xy1z, x1yz, x1y1z, xyz1, xy1z1, x1yz1, x1y1z1);
-                int y = cellY * this.verticalNoiseResolution + posY;
+                int y = cellY * this.chunkHeight + posY;
                 if (noise > 0.0D) {
                     return y + 1;
                 }
@@ -157,9 +169,15 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         return 0;
     }
 
-    protected abstract void sampleNoiseColumn(double[] buffer, int x, int z);
 
-    protected double[] computeNoiseRange(int x, int z) {
+    protected void sampleNoiseColumn(double[] buffer, int x, int z) {
+
+        this.sampleNoiseColumn(buffer, x, z,
+                3,
+                -10);
+    }
+
+    protected double[] getScaleAndDepth(int x, int z) {
         double[] depthAndScale = new double[2];
         float weightedScale = 0.0F;
         float weightedDepth = 0.0F;
