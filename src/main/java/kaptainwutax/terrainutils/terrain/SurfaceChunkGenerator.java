@@ -99,14 +99,14 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
     }
 
     protected void sampleNoiseColumn(double[] buffer, int x, int z) {
-        double[] ds = this.getScaleAndDepth(x, z);
-        double scale = ds[0];
-        double depth = ds[1];
+        double[] ds = this.getDepthAndScale(x, z);
+        double depth = ds[0];
+        double scale = ds[1];
         double sizeY = this.getNoiseSizeY() - 4;
         double m = 0.0D;
         for (int y = 0; y < this.getNoiseSizeY(); ++y) {
             double noise = this.sampleNoise(x, y, z);
-            noise -= this.computeNoiseFalloff(scale, depth, y);
+            noise -= this.computeNoiseFalloff(depth, scale, y);
             // fixme 1.15+
             if ((double) y > sizeY) {
                 noise = clampedLerp(noise, this.noiseSettings.topSlideSettings.target, ((double) (y - sizeY) - this.noiseSettings.topSlideSettings.offset) / (double) this.noiseSettings.topSlideSettings.size);
@@ -170,7 +170,7 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         return 0;
     }
 
-    protected double[] getScaleAndDepth(int x, int z) {
+    protected double[] getDepthAndScale(int x, int z) {
         double[] depthAndScale = new double[2];
         float weightedScale = 0.0F;
         float weightedDepth = 0.0F;

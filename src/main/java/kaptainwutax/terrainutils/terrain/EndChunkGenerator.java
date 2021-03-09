@@ -16,7 +16,7 @@ public class EndChunkGenerator extends SurfaceChunkGenerator {
     }
 
     @Override
-    protected double[] getScaleAndDepth(int x, int z) {
+    protected double[] getDepthAndScale(int x, int z) {
         double[] depthAndScale = new double[2];
         depthAndScale[0] = ((EndBiomeSource) this.biomeSource).height.sample(x, 0, z) - 8.0f;
         depthAndScale[1] = depthAndScale[0] > 0.0 ? 0.25 : 1.0;
@@ -27,7 +27,4 @@ public class EndChunkGenerator extends SurfaceChunkGenerator {
     public int getSeaLevel() {
         return 0;
     }
-
-
-
 }

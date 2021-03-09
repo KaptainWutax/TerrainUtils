@@ -20,9 +20,9 @@ public class NetherChunkGenerator extends SurfaceChunkGenerator {
 	}
 
 	@Override
-	protected double[] getScaleAndDepth(int x, int z) {
+	protected double[] getDepthAndScale(int x, int z) {
 		if (this.version.isNewerOrEqualTo(MCVersion.v1_16)){
-			return super.getScaleAndDepth(x,z);
+			return super.getDepthAndScale(x,z);
 		}
 		return new double[]{0.0,0.0};
 	}
