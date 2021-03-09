@@ -13,6 +13,10 @@ import kaptainwutax.seedutils.mc.MCVersion;
 import java.util.HashMap;
 import java.util.Map;
 
+import static kaptainwutax.noiseutils.utils.MathHelper.maintainPrecision;
+import static kaptainwutax.terrainutils.utils.MathHelper.clampedLerp;
+import static kaptainwutax.terrainutils.utils.MathHelper.sqrt;
+
 public abstract class SurfaceChunkGenerator extends ChunkGenerator {
 
     private final int verticalNoiseResolution;
@@ -48,7 +52,6 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         }
         this.random.advance(2620);
         this.noiseSampler = new OctavePerlinNoiseSampler(this.random, 16);
-        // override for end here with 17292
     }
 
     public int getNoiseSizeY() {
@@ -62,22 +65,24 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         double k = 1.0D;
 
         for (int l = 0; l < 16; ++l) {
-            double m = OctavePerlinNoiseSampler.maintainPrecision((double) x * d * k);
-            double n = OctavePerlinNoiseSampler.maintainPrecision((double) y * e * k);
-            double o = OctavePerlinNoiseSampler.maintainPrecision((double) z * d * k);
+            double m = maintainPrecision((double) x * d * k);
+            double n = maintainPrecision((double) y * e * k);
+            double o = maintainPrecision((double) z * d * k);
             double p = e * k;
             h += this.minLimitPerlinNoise.getOctave(l).sample(m, n, o, p, (double) y * p) / k;
             i += this.maxLimitPerlinNoise.getOctave(l).sample(m, n, o, p, (double) y * p) / k;
             if (l < 8) {
                 j += this.mainPerlinNoise.getOctave(l).sample(
-                        OctavePerlinNoiseSampler.maintainPrecision((double) x * f * k),
-                        OctavePerlinNoiseSampler.maintainPrecision((double) y * g * k),
-                        OctavePerlinNoiseSampler.maintainPrecision((double) z * f * k), g * k, (double) y * g * k) / k;
+                        maintainPrecision((double) x * f * k),
+                        maintainPrecision((double) y * g * k),
+                        maintainPrecision((double) z * f * k),
+                        g * k,
+                        (double) y * g * k) / k;
             }
             k /= 2.0D;
         }
 
-        return MathHelper.clampedLerp(h / 512.0D, i / 512.0D, (j / 10.0D + 1.0D) / 2.0D);
+        return clampedLerp(h / 512.0D, i / 512.0D, (j / 10.0D + 1.0D) / 2.0D);
     }
 
     protected void sampleNoiseColumn(double[] buffer, int x, int z, double d, double e, double f, double g, int i, int j) {
@@ -91,9 +96,9 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
             double noise = this.sampleNoise(x, ry, z, d, e, f, g);
             noise -= this.computeNoiseFalloff(h, k, ry);
             if ((double) ry > scale) {
-                noise = MathHelper.clampedLerp(noise, j, ((double) ry - scale) / (double) i);
+                noise = clampedLerp(noise, j, ((double) ry - scale) / (double) i);
             } else if ((double) ry < m) {
-                noise = MathHelper.clampedLerp(noise, -30.0D, (m - (double) ry) / (m - 1.0D));
+                noise = clampedLerp(noise, -30.0D, (m - (double) ry) / (m - 1.0D));
             }
             buffer[ry] = noise;
         }
@@ -113,35 +118,38 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
 
     @Override
     public int getHeightOnGround(int x, int z) {
-        int i = Math.floorDiv(x, this.horizontalNoiseResolution);
-        int j = Math.floorDiv(z, this.horizontalNoiseResolution);
-        int k = Math.floorMod(x, this.horizontalNoiseResolution);
-        int l = Math.floorMod(z, this.horizontalNoiseResolution);
-        double d = (double) k / (double) this.horizontalNoiseResolution;
-        double e = (double) l / (double) this.horizontalNoiseResolution;
+        // those are the coordinates of the region in the grid chosen
+        int cellX = Math.floorDiv(x, this.horizontalNoiseResolution);
+        int cellZ = Math.floorDiv(z, this.horizontalNoiseResolution);
+        // those are the coordinates in the chosen region
+        int posX = Math.floorMod(x, this.horizontalNoiseResolution);
+        int posZ = Math.floorMod(z, this.horizontalNoiseResolution);
+        double percentX = (double) posX / (double) this.horizontalNoiseResolution;
+        double percentZ = (double) posZ / (double) this.horizontalNoiseResolution;
         double[][] ds = new double[][] {
-                this.sampleNoiseColumn(i, j),
-                this.sampleNoiseColumn(i, j + 1),
-                this.sampleNoiseColumn(i + 1, j),
-                this.sampleNoiseColumn(i + 1, j + 1)
+                this.sampleNoiseColumn(cellX, cellZ),
+                this.sampleNoiseColumn(cellX, cellZ + 1),
+                this.sampleNoiseColumn(cellX + 1, cellZ),
+                this.sampleNoiseColumn(cellX + 1, cellZ + 1)
         };
 
-        for (int n = this.noiseSizeY - 1; n >= 0; --n) {
-            double f = ds[0][n];
-            double g = ds[1][n];
-            double h = ds[2][n];
-            double o = ds[3][n];
-            double p = ds[0][n + 1];
-            double q = ds[1][n + 1];
-            double r = ds[2][n + 1];
-            double s = ds[3][n + 1];
+        for (int cellY = this.noiseSizeY - 1; cellY >= 0; --cellY) {
+            double xyz = ds[0][cellY];
+            double xyz1 = ds[1][cellY];
+            double x1yz = ds[2][cellY];
+            double x1yz1 = ds[3][cellY];
+            double xy1z = ds[0][cellY + 1];
+            double xy1z1 = ds[1][cellY + 1];
+            double x1y1z = ds[2][cellY + 1];
+            double x1y1z1 = ds[3][cellY + 1];
 
-            for (int t = this.verticalNoiseResolution - 1; t >= 0; --t) {
-                double u = (double) t / (double) this.verticalNoiseResolution;
-                double v = MathHelper.lerp3(u, d, e, f, p, h, r, g, q, o, s);
-                int w = n * this.verticalNoiseResolution + t;
-                if (v > 0.0D) {
-                    return w + 1;
+            for (int posY = this.verticalNoiseResolution - 1; posY >= 0; --posY) {
+                double percentY = (double) posY / (double) this.verticalNoiseResolution;
+                // this is not a bug, mojang does not respect order
+                double noise = MathHelper.lerp3(percentY, percentX, percentZ, xyz, xy1z, x1yz, x1y1z, xyz1, xy1z1, x1yz1, x1y1z1);
+                int y = cellY * this.verticalNoiseResolution + posY;
+                if (noise > 0.0D) {
+                    return y + 1;
                 }
             }
         }
@@ -152,11 +160,11 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
     protected abstract void sampleNoiseColumn(double[] buffer, int x, int z);
 
     protected double[] computeNoiseRange(int x, int z) {
-        double[] ds = new double[2];
-        float f = 0.0F;
-        float g = 0.0F;
-        float h = 0.0F;
-        float j = this.biomeSource.getBiomeForNoiseGen(x, 0, z).getDepth();
+        double[] depthAndScale = new double[2];
+        float weightedScale = 0.0F;
+        float weightedDepth = 0.0F;
+        float totalWeight = 0.0F;
+        float depthAtCenter = this.biomeSource.getBiomeForNoiseGen(x, 0, z).getDepth();
 
         for (int rx = -2; rx <= 2; ++rx) {
             for (int rz = -2; rz <= 2; ++rz) {
@@ -169,60 +177,65 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
                 }
 
                 float weight = BIOME_WEIGHT_TABLE[rx + 2 + (rz + 2) * 5] / (depth + 2.0F);
-                if (biome.getDepth() > j) {
+                if (biome.getDepth() > depthAtCenter) {
                     weight /= 2.0F;
                 }
 
-                f += scale * weight;
-                g += depth * weight;
-                h += weight;
+                weightedScale += scale * weight;
+                weightedDepth += depth * weight;
+                totalWeight += weight;
             }
         }
 
-        f /= h;
-        g /= h;
-        f = f * 0.9F + 0.1F;
-        g = (g * 4.0F - 1.0F) / 8.0F;
-        if (this.biomeSource.getVersion().isNewerOrEqualTo(MCVersion.v1_16)){
-            ds[0] = g* 0.265625;
-            ds[1] = 96.0 /f;
-        }else{
-            ds[0] = (double) g + this.sampleNoise(x, z);
-            ds[1] = f;
+        weightedScale /= totalWeight;
+        weightedDepth /= totalWeight;
+        weightedScale = weightedScale * 0.9F + 0.1F;
+        weightedDepth = (weightedDepth * 4.0F - 1.0F) / 8.0F;
+        if (this.biomeSource.getVersion().isNewerOrEqualTo(MCVersion.v1_16)) {
+            depthAndScale[0] = weightedDepth * 0.265625;
+            depthAndScale[1] = 96.0 / weightedScale;
+        } else {
+            depthAndScale[0] = (double) weightedDepth + this.sampleNoise(x, z);
+            depthAndScale[1] = weightedScale;
         }
-        return ds;
+        return depthAndScale;
     }
-
-    ;
-
 
     private double sampleNoise(int x, int y) {
-        double d = this.noiseSampler.sample(x * 200, 10.0D, y * 200, 1.0D, 0.0D, true) / 8000.0D;
-        if (d < 0.0D) {
-            d = -d * 0.3D;
+        double noise = this.noiseSampler.sample(x * 200, 10.0D, y * 200, 1.0D, 0.0D, true) / 8000.0D;
+        if (noise < 0.0D) {
+            noise = -noise * 0.3D;
         }
 
-        d = d * 3.0D - 2.0D;
-        if (d < 0.0D) {
-            d /= 28.0D;
+        noise = noise * 3.0D - 2.0D;
+        if (noise < 0.0D) {
+            noise /= 28.0D;
         } else {
-            if (d > 1.0D) {
-                d = 1.0D;
+            if (noise > 1.0D) {
+                noise = 1.0D;
             }
-            d /= 40.0D;
+            noise /= 40.0D;
         }
 
-        return d;
+        return noise;
     }
 
-    protected abstract double computeNoiseFalloff(double depth, double scale, int y);
+    protected double computeNoiseFalloff(double depth, double scale, int y){
+        double fallOff = ((double) y - (8.5D + depth * 8.5D / 8.0D * 4.0D)) * 12.0D * 128.0D / 256.0D / scale;
+
+        if(fallOff < 0.0D) {
+            fallOff *= 4.0D;
+        }
+
+        return fallOff;
+    }
 
 
     static {
         BIOME_WEIGHT_TABLE = new float[25];
         for (int rx = -2; rx <= 2; ++rx) {
             for (int rz = -2; rz <= 2; ++rz) {
-                float f = 10.0F / MathHelper.sqrt((float) (rx * rx + rz * rz) + 0.2F);
+                float f = 10.0F / sqrt((float) (rx * rx + rz * rz) + 0.2F);
                 BIOME_WEIGHT_TABLE[rx + 2 + (rz + 2) * 5] = f;
             }
         }

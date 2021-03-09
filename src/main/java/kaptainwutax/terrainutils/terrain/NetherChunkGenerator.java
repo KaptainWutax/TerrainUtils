@@ -10,17 +10,6 @@ public class NetherChunkGenerator extends SurfaceChunkGenerator {
 	}
 
 	@Override
-	protected double computeNoiseFalloff(double depth, double scale, int y) {
-		double fallOff = ((double) y - (8.5D + depth * 8.5D / 8.0D * 4.0D)) * 12.0D * 128.0D / 256.0D / scale;
-
-		if(fallOff < 0.0D) {
-			fallOff *= 4.0D;
-		}
-
-		return fallOff;
-	}
-
-	@Override
 	public int getSeaLevel() {
 		return 32;
 	}

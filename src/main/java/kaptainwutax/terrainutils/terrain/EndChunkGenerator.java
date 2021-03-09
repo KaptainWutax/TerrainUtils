@@ -3,26 +3,21 @@ package kaptainwutax.terrainutils.terrain;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.biomeutils.source.EndBiomeSource;
+import kaptainwutax.noiseutils.simplex.SimplexNoiseSampler;
+import kaptainwutax.seedutils.mc.ChunkRand;
 import kaptainwutax.seedutils.util.UnsupportedVersion;
 
 public class EndChunkGenerator extends SurfaceChunkGenerator {
+	private SimplexNoiseSampler islandSimplexNoise;
 
 	public EndChunkGenerator(BiomeSource biomeSource) {
 		super(biomeSource, 2, 1, 128, true);
-		throw new UnsupportedVersion(this.version,"end chunk generator");
+		ChunkRand endGenRand=new ChunkRand(biomeSource.getWorldSeed());
+		endGenRand.advance(17292);
+		islandSimplexNoise=new SimplexNoiseSampler(endGenRand);
 	}
 
 	@Override
-	protected double computeNoiseFalloff(double depth, double scale, int y) {
-		double fallOff = ((double) y - (8.5D + depth * 8.5D / 8.0D * 4.0D)) * 12.0D * 128.0D / 256.0D / scale;
-
-		if(fallOff < 0.0D) {
-			fallOff *= 4.0D;
-		}
-
-		return fallOff;
-	}
-
 	protected double[] computeNoiseRange(int x, int z) {
 		double[] ds = new double[2];
 		ds[0] = ((EndBiomeSource)this.biomeSource).height.sample(x,0,z) - 8.0f;
