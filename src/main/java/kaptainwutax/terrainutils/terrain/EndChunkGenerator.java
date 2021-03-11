@@ -11,8 +11,8 @@ public class EndChunkGenerator extends SurfaceChunkGenerator {
         super(biomeSource, 128,2, 1,
                 NoiseSettings.create(2.0, 1.0, 80.0, 160.0)
                         .addTopSlide(-3000, 64, -46)
-                        .addBottomSlide(-30, 7, 1)
-                , true);
+                        .addBottomSlide(-30, 7, 1),
+                0.0, 0.0, true);
     }
 
     @Override

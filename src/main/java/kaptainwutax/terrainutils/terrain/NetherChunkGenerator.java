@@ -11,7 +11,7 @@ public class NetherChunkGenerator extends SurfaceChunkGenerator {
 				NoiseSettings.create(1.0, 3.0, 80.0, 60.0)
 						.addTopSlide(120, 3, 0)
 						.addBottomSlide(320, 4, -1),
-				false);
+				0.0, 0.019921875, false);
 	}
 
 	@Override
