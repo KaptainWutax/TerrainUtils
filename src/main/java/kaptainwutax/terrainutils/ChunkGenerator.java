@@ -41,10 +41,16 @@ public abstract class ChunkGenerator {
 		return 63;
 	}
 
+	/**
+	 * Returns the lowest non fluid block (this means not water nor air) y value - 1 to accommodate its position
+	 */
 	public int getHeightInGround(int x, int z) {
 		return this.getHeightOnGround(x, z) - 1;
 	}
 
+	/**
+	 * Returns the lowest non fluid block (this means not water nor air) y value
+	 */
 	public abstract int getHeightOnGround(int x, int z);
 
 

@@ -67,7 +67,11 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         }
 
         if (useSimplexNoise) {
-            this.surfaceDepthNoise = new OctaveSimplexNoiseSampler(this.random, 4); // needs a range here
+            if (version.isOlderThan(MCVersion.v1_15)){
+                this.surfaceDepthNoise = new OctaveSimplexNoiseSampler(this.random, 4);
+            }else{
+                this.surfaceDepthNoise = new OctaveSimplexNoiseSampler(this.random, IntStream.rangeClosed(-3, 0));
+            }
         } else {
             if (version.isOlderThan(MCVersion.v1_15)){
                 this.surfaceDepthNoise = new OctavePerlinNoiseSampler(this.random, 4);
@@ -136,7 +140,7 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
                 double fallOff = 1.0D - (double) y * 2.0D / (double) this.noiseSizeY + randomOffset;
                 fallOff=fallOff*densityFactor+densityOffset;
                 fallOff=(fallOff+depth)*scale;
-                noise = noise > 0.0 ? noise + fallOff * 4.0 : noise + fallOff;
+                noise = fallOff > 0.0 ? noise + fallOff * 4.0D : noise + fallOff;
                 if (this.noiseSettings.topSlideSettings.size>0.0D){
                     noise = clampedLerp(this.noiseSettings.topSlideSettings.target, noise, ((double)(this.noiseSizeY - y) - this.noiseSettings.topSlideSettings.offset) / this.noiseSettings.topSlideSettings.size);
                 }
@@ -153,7 +157,6 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
                 }
             }
             buffer[y] = noise;
-
         }
     }
 
