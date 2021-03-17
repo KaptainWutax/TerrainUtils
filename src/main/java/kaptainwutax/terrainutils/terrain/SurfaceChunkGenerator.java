@@ -55,39 +55,39 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         this.noiseSizeY = worldHeight / this.chunkHeight;
         this.noiseSizeZ = 16 / this.chunkWidth;
         this.random = new ChunkRand(biomeSource.getWorldSeed());
-        if (version.isOlderThan(MCVersion.v1_15)){
+        if (version.isOlderThan(MCVersion.v1_15)) {
             // those lines can be simplified to setting the lacunarity correctly to the lowest (FIXME)
             this.minLimitPerlinNoise = new OctavePerlinNoiseSampler(this.random, 16);
             this.maxLimitPerlinNoise = new OctavePerlinNoiseSampler(this.random, 16);
             this.mainPerlinNoise = new OctavePerlinNoiseSampler(this.random, 8);
-        }else{
+        } else {
             this.minLimitPerlinNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
             this.maxLimitPerlinNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
             this.mainPerlinNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-7, 0));
         }
 
         if (useSimplexNoise) {
-            if (version.isOlderThan(MCVersion.v1_15)){
+            if (version.isOlderThan(MCVersion.v1_15)) {
                 this.surfaceDepthNoise = new OctaveSimplexNoiseSampler(this.random, 4);
-            }else{
+            } else {
                 this.surfaceDepthNoise = new OctaveSimplexNoiseSampler(this.random, IntStream.rangeClosed(-3, 0));
             }
         } else {
-            if (version.isOlderThan(MCVersion.v1_15)){
+            if (version.isOlderThan(MCVersion.v1_15)) {
                 this.surfaceDepthNoise = new OctavePerlinNoiseSampler(this.random, 4);
-            }else{
+            } else {
                 this.surfaceDepthNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-3, 0));
             }
 
         }
         this.random.advance(2620);
-        if (version.isOlderThan(MCVersion.v1_15)){
+        if (version.isOlderThan(MCVersion.v1_15)) {
             this.noiseSampler = new OctavePerlinNoiseSampler(this.random, 16);
-        }else{
+        } else {
             this.noiseSampler = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
         }
-        this.densityFactor=densityFactor;
-        this.densityOffset=densityOffset;
+        this.densityFactor = densityFactor;
+        this.densityOffset = densityOffset;
     }
 
     public int getNoiseSizeY() {
@@ -133,21 +133,21 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         double scale = ds[1];
         double sizeY = this.getNoiseSizeY() - 4;
         double m = 0.0D;
-        double randomOffset = this.biomeSource.getDimension()== Dimension.OVERWORLD?this.sampleNoise(x, z):0.0D;
+        double randomOffset = this.biomeSource.getDimension() == Dimension.OVERWORLD ? this.sampleNoise(x, z) : 0.0D;
         for (int y = 0; y < this.getNoiseSizeY(); ++y) {
             double noise = this.sampleNoise(x, y, z);
             if (version.isNewerOrEqualTo(MCVersion.v1_15)) {
                 double fallOff = 1.0D - (double) y * 2.0D / (double) this.noiseSizeY + randomOffset;
-                fallOff=fallOff*densityFactor+densityOffset;
-                fallOff=(fallOff+depth)*scale;
+                fallOff = fallOff * densityFactor + densityOffset;
+                fallOff = (fallOff + depth) * scale;
                 noise = fallOff > 0.0 ? noise + fallOff * 4.0D : noise + fallOff;
-                if (this.noiseSettings.topSlideSettings.size>0.0D){
-                    noise = clampedLerp(this.noiseSettings.topSlideSettings.target, noise, ((double)(this.noiseSizeY - y) - this.noiseSettings.topSlideSettings.offset) / this.noiseSettings.topSlideSettings.size);
+                if (this.noiseSettings.topSlideSettings.size > 0.0D) {
+                    noise = clampedLerp(this.noiseSettings.topSlideSettings.target, noise, ((double) (this.noiseSizeY - y) - this.noiseSettings.topSlideSettings.offset) / this.noiseSettings.topSlideSettings.size);
                 }
-                if (this.noiseSettings.bottomSlideSettings.size>0.0D){
-                    noise = clampedLerp(this.noiseSettings.bottomSlideSettings.target, noise, ((double)y - this.noiseSettings.bottomSlideSettings.offset) / this.noiseSettings.bottomSlideSettings.size);
+                if (this.noiseSettings.bottomSlideSettings.size > 0.0D) {
+                    noise = clampedLerp(this.noiseSettings.bottomSlideSettings.target, noise, ((double) y - this.noiseSettings.bottomSlideSettings.offset) / this.noiseSettings.bottomSlideSettings.size);
                 }
-            }else{
+            } else {
                 noise -= this.computeNoiseFalloff(depth, scale, y);
                 // fixme 1.15+
                 if ((double) y > sizeY) {
@@ -218,10 +218,10 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         float weightedScale = 0.0F;
         float weightedDepth = 0.0F;
         float totalWeight = 0.0F;
-        float depthAtCenter = this.biomeSource.getBiomeForNoiseGen(x, 0, z).getDepth();
+        float depthAtCenter = this.biomeSource.getBiomeForNoiseGen(x, this.getSeaLevel(), z).getDepth();
         for (int rx = -2; rx <= 2; ++rx) {
             for (int rz = -2; rz <= 2; ++rz) {
-                Biome biome = this.biomeSource.getBiomeForNoiseGen(x + rx, 0, z + rz);
+                Biome biome = this.biomeSource.getBiomeForNoiseGen(x + rx, this.getSeaLevel(), z + rz);
                 float depth = biome.getDepth();
                 float scale = biome.getScale();
                 if (this.amplified && depth > 0.0F) {
@@ -243,9 +243,10 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         weightedDepth /= totalWeight;
         weightedScale = weightedScale * 0.9F + 0.1F;
         weightedDepth = (weightedDepth * 4.0F - 1.0F) / 8.0F;
+        // weightedDepth = (weightedDepth * 0.5F - 0.125F);
         if (this.biomeSource.getVersion().isNewerOrEqualTo(MCVersion.v1_16)) {
-            depthAndScale[0] = weightedDepth * 17 / 64;
-            depthAndScale[1] = 96.0 / weightedScale;
+            depthAndScale[0] = weightedDepth * 17.0D / 64.0D;
+            depthAndScale[1] = 96.0D / weightedScale;
         } else {
             depthAndScale[0] = (double) weightedDepth + this.sampleNoise(x, z);
             depthAndScale[1] = weightedScale;
@@ -254,9 +255,9 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
     }
 
     private double sampleNoise(int x, int y) {
-        double noise = this.noiseSampler.sample(x * 200, 10.0D, y * 200, 1.0D, 0.0D, true) ;
+        double noise = this.noiseSampler.sample(x * 200, 10.0D, y * 200, 1.0D, 0.0D, true);
         if (version.isOlderThan(MCVersion.v1_15)) {
-            noise/= 8000.0D;
+            noise /= 8000.0D;
         }
         noise = noise < 0.0D ? -noise * 0.3D : noise;
         // 64/17=3.7647058823529416D factor between versions except for the 24 which is 8.19?
@@ -286,6 +287,7 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
     }
 
     protected static final float[] BIOME_WEIGHT_TABLE;
+
     static {
         BIOME_WEIGHT_TABLE = new float[25];
         for (int rx = -2; rx <= 2; ++rx) {
