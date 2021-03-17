@@ -12,7 +12,7 @@ public class NoiseSettings {
     }
 
     public NoiseSettings(NoiseSamplingSettings samplingSettings) {
-        this(samplingSettings,null,null);
+        this(samplingSettings, null, null);
     }
 
     public static NoiseSettings create(double xzScale, double yScale, double xzFactor, double yFactor) {

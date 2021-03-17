@@ -1,15 +1,15 @@
 package kaptainwutax.terrainutils.terrain;
 
 import kaptainwutax.biomeutils.Biome;
-import kaptainwutax.noiseutils.utils.MathHelper;
-import kaptainwutax.seedutils.mc.Dimension;
-import kaptainwutax.terrainutils.ChunkGenerator;
+import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.noiseutils.noise.NoiseSampler;
 import kaptainwutax.noiseutils.perlin.OctavePerlinNoiseSampler;
 import kaptainwutax.noiseutils.simplex.OctaveSimplexNoiseSampler;
-import kaptainwutax.biomeutils.source.BiomeSource;
+import kaptainwutax.noiseutils.utils.MathHelper;
 import kaptainwutax.seedutils.mc.ChunkRand;
+import kaptainwutax.seedutils.mc.Dimension;
 import kaptainwutax.seedutils.mc.MCVersion;
+import kaptainwutax.terrainutils.ChunkGenerator;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 import java.util.HashMap;
@@ -22,6 +22,20 @@ import static kaptainwutax.terrainutils.utils.MathHelper.sqrt;
 
 public abstract class SurfaceChunkGenerator extends ChunkGenerator {
 
+    protected static final float[] BIOME_WEIGHT_TABLE;
+
+    static {
+        BIOME_WEIGHT_TABLE = new float[25];
+        for (int rx = -2; rx <= 2; ++rx) {
+            for (int rz = -2; rz <= 2; ++rz) {
+                float f = 10.0F / sqrt((float) (rx * rx + rz * rz) + 0.2F);
+                BIOME_WEIGHT_TABLE[rx + 2 + (rz + 2) * 5] = f;
+            }
+        }
+    }
+
+    protected final OctavePerlinNoiseSampler noiseSampler;
+    protected final ChunkRand random;
     private final int chunkHeight;
     private final int chunkWidth;
     private final int noiseSizeX;
@@ -31,12 +45,9 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
     private final OctavePerlinNoiseSampler minLimitPerlinNoise;
     private final OctavePerlinNoiseSampler maxLimitPerlinNoise;
     private final OctavePerlinNoiseSampler mainPerlinNoise;
-    protected final OctavePerlinNoiseSampler noiseSampler;
     private final NoiseSampler surfaceDepthNoise;
-    protected final ChunkRand random;
     private final double densityFactor;
     private final double densityOffset;
-
     private final Map<Long, double[]> noiseColumnCache = new HashMap<>();
 
     public SurfaceChunkGenerator(BiomeSource biomeSource,
@@ -284,17 +295,5 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
             fallOff *= 4.0D;
         }
         return fallOff;
-    }
-
-    protected static final float[] BIOME_WEIGHT_TABLE;
-
-    static {
-        BIOME_WEIGHT_TABLE = new float[25];
-        for (int rx = -2; rx <= 2; ++rx) {
-            for (int rz = -2; rz <= 2; ++rz) {
-                float f = 10.0F / sqrt((float) (rx * rx + rz * rz) + 0.2F);
-                BIOME_WEIGHT_TABLE[rx + 2 + (rz + 2) * 5] = f;
-            }
-        }
     }
 }

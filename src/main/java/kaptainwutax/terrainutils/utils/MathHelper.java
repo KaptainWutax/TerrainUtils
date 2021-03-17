@@ -13,7 +13,7 @@ public class MathHelper {
     }
 
     public static float sqrt(float f) {
-        return (float)Math.sqrt(f);
+        return (float) Math.sqrt(f);
     }
 
     public static double clamp(double value, double min, double max) {
