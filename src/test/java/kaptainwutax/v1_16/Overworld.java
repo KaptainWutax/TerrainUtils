@@ -74,4 +74,22 @@ public class Overworld {
         randomChunkGen(MCVersion.v1_16, 541515181818L, Dimension.OVERWORLD, 32, 21382138983289132L, size32);
     }
 
+    //        Bootstrap.register();
+    //        long seed = 541515181818L;
+    //        NoiseChunkGenerator noiseChunkGenerator = new NoiseChunkGenerator(new OverworldBiomeProvider(seed, false, false), seed, OverworldPreset(new DimensionStructuresSettings(true), false));
+    //        int size = 32;
+    //        Random r = new Random(21382138983289132L);
+    //        System.out.print("{");
+    //        for (int i = 0; i < size; i++) {
+    //            for (int j = 0; j < size; j++) {
+    //                int x = r.nextInt(512);
+    //                int z = r.nextInt(512);
+    //                int y = noiseChunkGenerator.getOffset(x, z, Heightmap.Type.OCEAN_FLOOR_WG);
+    //                System.out.printf("%d ,", y);
+    //            }
+    //            System.out.println();
+    //        }
+    //        System.out.print("};");
+    //        System.out.println();
+
 }
