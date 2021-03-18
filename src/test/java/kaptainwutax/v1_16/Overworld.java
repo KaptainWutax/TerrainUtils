@@ -1,38 +1,14 @@
-package kaptainwutax;
+package kaptainwutax.v1_16;
 
-import kaptainwutax.biomeutils.source.OverworldBiomeSource;
-import kaptainwutax.terrainutils.terrain.OverworldChunkGenerator;
-import kaptainwutax.terrainutils.ChunkGenerator;
 import kaptainwutax.seedutils.mc.Dimension;
 import kaptainwutax.seedutils.mc.MCVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Random;
+import static kaptainwutax.TestFramework.randomChunkGen;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-public class TerrainTest {
-    private static final int[] heightmap_14 = {
-            46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 45,
-            46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,
-            46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,
-            46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,
-            46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,
-            46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,
-            46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,
-            45, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,
-            45, 45, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46, 46,
-            45, 45, 45, 46, 46, 46, 46, 46, 47, 46, 46, 46, 46, 46, 46, 46,
-            44, 45, 45, 46, 46, 46, 46, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-            44, 45, 45, 46, 46, 46, 47, 47, 47, 47, 47, 47, 47, 47, 47, 47,
-            44, 44, 45, 46, 46, 46, 47, 47, 48, 48, 48, 48, 48, 48, 47, 47,
-            43, 45, 45, 46, 47, 47, 47, 48, 48, 48, 48, 48, 48, 48, 47, 47,
-            43, 45, 46, 47, 47, 48, 48, 48, 48, 48, 48, 48, 48, 47, 47, 47,
-            43, 45, 46, 47, 48, 48, 48, 48, 48, 48, 48, 48, 48, 47, 47, 46
-    };
-
-    private static final int[] heightmap_16 = {
+public class Overworld {
+    private static final int[] size16 = {
             75, 64, 56, 78, 65, 90, 59, 59, 66, 62, 71, 61, 64, 64, 76, 61,
             79, 55, 65, 66, 61, 65, 78, 61, 62, 92, 63, 58, 79, 60, 56, 69,
             65, 63, 63, 65, 63, 64, 111, 129, 60, 71, 65, 57, 70, 61, 64, 63,
@@ -51,7 +27,7 @@ public class TerrainTest {
             60, 67, 74, 62, 61, 59, 75, 56, 63, 56, 71, 80, 67, 75, 69, 117
     };
 
-    private static final int[] heightmap_16_2 = {
+    private static final int[] size32 = {
             69, 70, 75, 59, 61, 64, 64, 75, 62, 59, 61, 66, 62, 74, 56, 73, 61, 89, 62, 69, 70, 62, 59, 80, 63, 64, 84, 59, 64, 59, 106, 105,
             68, 74, 62, 63, 96, 83, 64, 74, 60, 64, 61, 94, 72, 61, 61, 62, 78, 83, 67, 65, 75, 64, 61, 69, 79, 70, 59, 70, 63, 64, 69, 60,
             67, 66, 63, 79, 71, 61, 62, 75, 64, 63, 106, 66, 57, 63, 63, 62, 90, 71, 78, 73, 63, 67, 60, 63, 65, 68, 60, 70, 60, 107, 63, 82,
@@ -86,56 +62,16 @@ public class TerrainTest {
             69, 60, 60, 76, 84, 66, 60, 69, 56, 94, 71, 104, 70, 63, 78, 68, 75, 64, 63, 59, 60, 72, 64, 61, 61, 61, 60, 60, 60, 62, 64, 64
     };
 
-
     @Test
-    @DisplayName("Test Height map for 1.14")
-    public void testHeight() {
-        OverworldBiomeSource bs = new OverworldBiomeSource(MCVersion.v1_14, 1L);
-        OverworldChunkGenerator cg = (OverworldChunkGenerator) ChunkGenerator.of(Dimension.OVERWORLD, bs);
-        for (int i = 0; i < 16 * 16; i++) {
-            assertEquals(heightmap_14[i], cg.getHeightOnGround(i / 16, i % 16));
-        }
-
+    @DisplayName("Test Height map version 1.16 size 16")
+    public void size16() {
+        randomChunkGen(MCVersion.v1_16, 541515181818L, Dimension.OVERWORLD, 16, 4227552225777L, size16);
     }
 
     @Test
-    @DisplayName("Test Height map for 1.16")
-    public void test1_16() {
-        OverworldBiomeSource bs = new OverworldBiomeSource(MCVersion.v1_16, 541515181818L);
-        ChunkGenerator cg = ChunkGenerator.of(Dimension.OVERWORLD, bs);
-        int size = 16;
-        assert cg != null;
-        Random r = new Random(4227552225777L);
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                int x = r.nextInt(512);
-                int z = r.nextInt(512);
-                int y = cg.getHeightOnGround(x, z);
-                System.out.println(x + " " + z);
-                assertEquals(heightmap_16[i * size + j], y);
-
-            }
-        }
-    }
-
-    @Test
-    @DisplayName("Test Height map 2 for 1.16")
-    public void test1_16_2() {
-        // NOT CORRECT YET FIXME
-        OverworldBiomeSource bs = new OverworldBiomeSource(MCVersion.v1_16, 541515181818L);
-        ChunkGenerator cg = ChunkGenerator.of(Dimension.OVERWORLD, bs);
-        int size = 32;
-        assert cg != null;
-        Random r = new Random(21382138983289132L);
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                int x = r.nextInt(512);
-                int z = r.nextInt(512);
-                int y = cg.getHeightOnGround(x, z);
-                System.out.println(x + " " + z);
-                assertEquals(heightmap_16_2[i * size + j], y);
-            }
-        }
+    @DisplayName("Test Height version 1.16 map size 32")
+    public void size32() {
+        randomChunkGen(MCVersion.v1_16, 541515181818L, Dimension.OVERWORLD, 32, 21382138983289132L, size32);
     }
 
 }
