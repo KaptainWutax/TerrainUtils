@@ -22,6 +22,9 @@ public abstract class ChunkGenerator {
         if (this.version.isOlderThan(MCVersion.v1_14)) {
             throw new UnsupportedVersion(this.version, "chunk generator");
         }
+        if (this.version.isOlderThan(MCVersion.v1_16)){
+            System.out.println("WARNING THIS VERSION IS UNTESTED YET");
+        }
     }
 
     public static Factory factory(Dimension dimension, BiomeSource biomeSource) {
