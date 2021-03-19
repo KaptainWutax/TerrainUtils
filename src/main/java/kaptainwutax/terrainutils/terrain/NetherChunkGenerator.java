@@ -2,6 +2,7 @@ package kaptainwutax.terrainutils.terrain;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.seedutils.mc.MCVersion;
+import kaptainwutax.terrainutils.utils.Block;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 public class NetherChunkGenerator extends SurfaceChunkGenerator {
@@ -17,6 +18,16 @@ public class NetherChunkGenerator extends SurfaceChunkGenerator {
     @Override
     public int getSeaLevel() {
         return 32;
+    }
+
+    @Override
+    public Block getDefaultBlock() {
+        return Block.NETHERRACK;
+    }
+
+    @Override
+    public Block getDefaultFluid() {
+        return Block.LAVA;
     }
 
     @Override

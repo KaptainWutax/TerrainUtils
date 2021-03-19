@@ -7,6 +7,7 @@ import kaptainwutax.seedutils.util.UnsupportedVersion;
 import kaptainwutax.terrainutils.terrain.EndChunkGenerator;
 import kaptainwutax.terrainutils.terrain.NetherChunkGenerator;
 import kaptainwutax.terrainutils.terrain.OverworldChunkGenerator;
+import kaptainwutax.terrainutils.utils.Block;
 
 public abstract class ChunkGenerator {
 
@@ -21,7 +22,6 @@ public abstract class ChunkGenerator {
         if (this.version.isOlderThan(MCVersion.v1_14)) {
             throw new UnsupportedVersion(this.version, "chunk generator");
         }
-        System.out.println("THIS IS STILL EXPERIMENTAL");
     }
 
     public static Factory factory(Dimension dimension, BiomeSource biomeSource) {
@@ -41,6 +41,20 @@ public abstract class ChunkGenerator {
         return 63;
     }
 
+    public int getMinWorldHeight() {
+        return 0;
+    }
+
+    public int getMaxWorldHeight() {
+        return getWorldHeight() - getMinWorldHeight();
+    }
+
+    public abstract int getWorldHeight();
+
+    public abstract Block getDefaultBlock();
+
+    public abstract Block getDefaultFluid();
+
     /**
      * Returns the lowest non fluid block (this means not water nor air) y value - 1 to accommodate its position
      */
@@ -53,6 +67,15 @@ public abstract class ChunkGenerator {
      */
     public abstract int getHeightOnGround(int x, int z);
 
+    /**
+     * Returns the block column at x,z of length: worldHeight, this column has 3 blocks tops, default block, default fluid and air
+     */
+    public abstract Block[] getColumnAt(int x, int z);
+
+    /**
+     * Returns the block at x,y,z, this block can be 3 blocks tops, default block, default fluid and air
+     */
+    public abstract Block getBlockAt(int x, int y, int z);
 
     @FunctionalInterface
     public interface Factory {

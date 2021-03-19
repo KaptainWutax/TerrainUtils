@@ -10,10 +10,12 @@ import kaptainwutax.seedutils.mc.ChunkRand;
 import kaptainwutax.seedutils.mc.Dimension;
 import kaptainwutax.seedutils.mc.MCVersion;
 import kaptainwutax.terrainutils.ChunkGenerator;
+import kaptainwutax.terrainutils.utils.Block;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import static kaptainwutax.noiseutils.utils.MathHelper.maintainPrecision;
@@ -49,6 +51,8 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
     private final double densityFactor;
     private final double densityOffset;
     private final Map<Long, double[]> noiseColumnCache = new HashMap<>();
+    private final Map<Long, Block[]> columnCache = new HashMap<>();
+    private final int worldHeight;
 
     public SurfaceChunkGenerator(BiomeSource biomeSource,
                                  int worldHeight,
@@ -59,6 +63,7 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
                                  double densityOffset,
                                  boolean useSimplexNoise) {
         super(biomeSource);
+        this.worldHeight = worldHeight;
         this.chunkHeight = verticalNoiseResolution * 4;
         this.chunkWidth = horizontalNoiseResolution * 4;
         this.noiseSettings = noiseSettings;
@@ -100,6 +105,22 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         this.densityFactor = densityFactor;
         this.densityOffset = densityOffset;
     }
+
+    public int getMinWorldHeight() {
+        return 0;
+    }
+
+    public int getMaxWorldHeight() {
+        return getWorldHeight() - getMinWorldHeight();
+    }
+
+    public int getWorldHeight() {
+        return worldHeight;
+    }
+
+    public abstract Block getDefaultBlock();
+
+    public abstract Block getDefaultFluid();
 
     public int getNoiseSizeY() {
         return this.noiseSizeY + 1;
@@ -183,8 +204,29 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         }
     }
 
-    @Override
-    public int getHeightOnGround(int x, int z) {
+    public Block[] getColumnAt(int x, int z) {
+        long key = ((((long) x) & 0xFFFFFFFFL) << 32) | (((long) z) & 0xFFFFFFFFL);
+        if (columnCache.containsKey(key)) {
+            return columnCache.get(key);
+        } else {
+            assert getWorldHeight() == (this.noiseSizeY * this.chunkHeight);
+            Block[] buffer = new Block[this.getWorldHeight()];
+            int y=this.generateColumn(buffer, x, z, null);
+            assert y==0;
+            columnCache.put(key, buffer);
+            return buffer;
+        }
+    }
+
+    public Block getBlockAt(int x, int y, int z) {
+        // long key = ((((long) y) & 0x3fff) << 50)  |((((long) x) & 0x1FFFFFF) << 25) | (((long) z) & 0x1FFFFFF);
+        if (y > this.getMaxWorldHeight() || y < this.getMinWorldHeight()) {
+            throw new UnsupportedOperationException(String.format("Y=%d value outside of [%d;%d]", y, getMinWorldHeight(), getMaxWorldHeight()));
+        }
+        return getColumnAt(x, z)[y];
+    }
+
+    public int generateColumn(Block[] buffer, int x, int z, Predicate<Block> blockPredicate) {
         // those are the coordinates of the region in the grid chosen
         int cellX = Math.floorDiv(x, this.chunkWidth);
         int cellZ = Math.floorDiv(z, this.chunkWidth);
@@ -215,13 +257,23 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
                 // this is not a bug, mojang does not respect order
                 double noise = MathHelper.lerp3(percentY, percentX, percentZ, xyz, xy1z, x1yz, x1y1z, xyz1, xy1z1, x1yz1, x1y1z1);
                 int y = cellY * this.chunkHeight + posY;
-                if (noise > 0.0D) {
+                Block block = this.getBlockFromNoise(noise, y);
+                // we assume you actually have correctly filled the buffer
+                if (buffer!=null){
+                    buffer[y] = block;
+                }
+                if (blockPredicate!=null && blockPredicate.test(block)) {
                     return y + 1;
                 }
             }
         }
-
         return 0;
+    }
+
+
+    @Override
+    public int getHeightOnGround(int x, int z) {
+        return this.generateColumn(null, x, z, (block) -> block==this.getDefaultBlock());
     }
 
     protected double[] getDepthAndScale(int x, int z) {
@@ -296,4 +348,19 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         }
         return fallOff;
     }
+
+    public Block getBlockFromNoise(double noise, int y) {
+        Block block;
+        if (noise > 0.0D) {
+            block = this.getDefaultBlock();
+        } else if (y < this.getSeaLevel()) {
+            block = this.getDefaultFluid();
+        } else {
+            block = Block.AIR;
+        }
+
+        return block;
+    }
+
+
 }

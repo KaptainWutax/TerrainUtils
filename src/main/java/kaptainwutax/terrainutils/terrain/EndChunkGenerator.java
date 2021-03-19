@@ -3,6 +3,7 @@ package kaptainwutax.terrainutils.terrain;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.biomeutils.source.EndBiomeSource;
+import kaptainwutax.terrainutils.utils.Block;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 public class EndChunkGenerator extends SurfaceChunkGenerator {
@@ -13,6 +14,16 @@ public class EndChunkGenerator extends SurfaceChunkGenerator {
                         .addTopSlide(-3000, 64, -46)
                         .addBottomSlide(-30, 7, 1),
                 0.0, 0.0, true);
+    }
+
+    @Override
+    public Block getDefaultBlock() {
+        return Block.END_STONE;
+    }
+
+    @Override
+    public Block getDefaultFluid() {
+        return Block.AIR;
     }
 
     @Override
