@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TestFramework {
     public static boolean DEBUG = false;
 
-    public static void randomChunkGen(MCVersion version, long seed, Dimension dimension, int size, long randomSeed, int[] heightmap) {
+    public static void randomChunkGen(MCVersion version, long seed, Dimension dimension, int size, long randomSeed, int[] heightMap) {
         BiomeSource bs = BiomeSource.of(dimension, version, seed);
         ChunkGenerator cg = ChunkGenerator.of(dimension, bs);
         assert cg != null;
@@ -23,7 +23,7 @@ public class TestFramework {
                 int z = r.nextInt(512);
                 int y = cg.getHeightOnGround(x, z);
                 if (DEBUG) System.out.println(x + " " + z);
-                assertEquals(heightmap[i * size + j], y);
+                assertEquals(heightMap[i * size + j], y);
             }
         }
     }
