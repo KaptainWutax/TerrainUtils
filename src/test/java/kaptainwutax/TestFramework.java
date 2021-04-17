@@ -1,8 +1,8 @@
 package kaptainwutax;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
-import kaptainwutax.seedutils.mc.Dimension;
-import kaptainwutax.seedutils.mc.MCVersion;
+import kaptainwutax.mcutils.state.Dimension;
+import kaptainwutax.mcutils.version.MCVersion;
 import kaptainwutax.terrainutils.ChunkGenerator;
 
 import java.util.Random;

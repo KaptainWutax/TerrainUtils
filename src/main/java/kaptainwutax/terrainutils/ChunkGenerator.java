@@ -1,9 +1,9 @@
 package kaptainwutax.terrainutils;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
-import kaptainwutax.seedutils.mc.Dimension;
-import kaptainwutax.seedutils.mc.MCVersion;
-import kaptainwutax.seedutils.util.UnsupportedVersion;
+import kaptainwutax.mcutils.state.Dimension;
+import kaptainwutax.mcutils.version.MCVersion;
+import kaptainwutax.mcutils.version.UnsupportedVersion;
 import kaptainwutax.terrainutils.terrain.EndChunkGenerator;
 import kaptainwutax.terrainutils.terrain.NetherChunkGenerator;
 import kaptainwutax.terrainutils.terrain.OverworldChunkGenerator;
@@ -19,7 +19,7 @@ public abstract class ChunkGenerator {
         this.biomeSource = biomeSource;
         this.version = biomeSource.getVersion();
         this.amplified = false;
-        if (this.version.isOlderThan(MCVersion.v1_14)) {
+        if (this.version.isOlderThan(MCVersion.v1_13)) {
             throw new UnsupportedVersion(this.version, "chunk generator");
         }
         if (this.version.isOlderThan(MCVersion.v1_16)){
