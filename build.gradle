@@ -18,7 +18,7 @@ dependencies {
     implementation('com.github.KaptainWutax:SeedUtils:b6a383113ce5d8d09a59e91b28ff064fb97c0709') { transitive = false }
     implementation('com.github.KaptainWutax:MCUtils:cb9c78e4e37e12dca0ddaefc3a7f3053dfbd237b') { transitive = false }
     implementation('com.github.KaptainWutax:NoiseUtils:bb71e46efe0f8d930bac8af94fecf250b70e0c23') { transitive = false }
-    implementation('com.github.KaptainWutax:BiomeUtils:f27f6e029b85c8a32371ae62292c6ac7fb121674') {transitive = false}
+    implementation('com.github.KaptainWutax:BiomeUtils:94f23a7d62dc450f15821e05de6a89661396f8c2') {transitive = false}
 
     testImplementation('org.junit.jupiter:junit-jupiter-api:5.4.2')
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.4.2')
