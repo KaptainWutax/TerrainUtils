@@ -39,6 +39,17 @@ public abstract class ChunkGenerator {
         return factory == null ? null : factory.create(biomeSource);
     }
 
+    public BiomeSource getBiomeSource() {
+        return biomeSource;
+    }
+
+    public MCVersion getVersion() {
+        return version;
+    }
+
+    public long getWorldSeed(){
+        return biomeSource.getWorldSeed();
+    }
 
     public int getSeaLevel() {
         return 63;
