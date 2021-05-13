@@ -1,7 +1,8 @@
 package kaptainwutax.terrainutils.terrain;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
-import kaptainwutax.terrainutils.utils.Block;
+import kaptainwutax.mcutils.block.Block;
+import kaptainwutax.mcutils.block.Blocks;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 public class OverworldChunkGenerator extends SurfaceChunkGenerator {
@@ -16,11 +17,11 @@ public class OverworldChunkGenerator extends SurfaceChunkGenerator {
 
     @Override
     public Block getDefaultBlock() {
-        return Block.STONE;
+        return Blocks.STONE;
     }
 
     @Override
     public Block getDefaultFluid() {
-        return Block.WATER;
+        return Blocks.WATER;
     }
 }

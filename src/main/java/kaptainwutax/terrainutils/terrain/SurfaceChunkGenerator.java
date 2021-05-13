@@ -2,6 +2,8 @@ package kaptainwutax.terrainutils.terrain;
 
 import kaptainwutax.biomeutils.biome.Biome;
 import kaptainwutax.biomeutils.source.BiomeSource;
+import kaptainwutax.mcutils.block.Block;
+import kaptainwutax.mcutils.block.Blocks;
 import kaptainwutax.mcutils.rand.ChunkRand;
 import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.mcutils.version.MCVersion;
@@ -10,7 +12,6 @@ import kaptainwutax.noiseutils.perlin.OctavePerlinNoiseSampler;
 import kaptainwutax.noiseutils.simplex.OctaveSimplexNoiseSampler;
 import kaptainwutax.noiseutils.utils.MathHelper;
 import kaptainwutax.terrainutils.ChunkGenerator;
-import kaptainwutax.terrainutils.utils.Block;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 import java.util.HashMap;
@@ -276,6 +277,11 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         return this.generateColumn(null, x, z, (block) -> block==this.getDefaultBlock());
     }
 
+    @Override
+    public int getFirstHeightInColumn(int x, int z, Predicate<Block> predicate) {
+        return this.generateColumn(null, x, z, predicate);
+    }
+
     protected double[] getDepthAndScale(int x, int z) {
         double[] depthAndScale = new double[2];
         float weightedScale = 0.0F;
@@ -356,7 +362,7 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         } else if (y < this.getSeaLevel()) {
             block = this.getDefaultFluid();
         } else {
-            block = Block.AIR;
+            block = Blocks.AIR;
         }
 
         return block;

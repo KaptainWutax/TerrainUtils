@@ -1,15 +1,15 @@
 package kaptainwutax.v1_13;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
+import kaptainwutax.mcutils.block.Block;
 import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.mcutils.version.MCVersion;
 import kaptainwutax.terrainutils.ChunkGenerator;
-import kaptainwutax.terrainutils.utils.Block;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static kaptainwutax.TestFramework.randomChunkGen;
-import static kaptainwutax.terrainutils.utils.Block.*;
+import static kaptainwutax.mcutils.block.Blocks.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Nether {

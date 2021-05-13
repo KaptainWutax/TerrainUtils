@@ -1,13 +1,15 @@
 package kaptainwutax.terrainutils;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
+import kaptainwutax.mcutils.block.Block;
 import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.mcutils.version.MCVersion;
 import kaptainwutax.mcutils.version.UnsupportedVersion;
 import kaptainwutax.terrainutils.terrain.EndChunkGenerator;
 import kaptainwutax.terrainutils.terrain.NetherChunkGenerator;
 import kaptainwutax.terrainutils.terrain.OverworldChunkGenerator;
-import kaptainwutax.terrainutils.utils.Block;
+
+import java.util.function.Predicate;
 
 public abstract class ChunkGenerator {
 
@@ -82,9 +84,16 @@ public abstract class ChunkGenerator {
     public abstract int getHeightOnGround(int x, int z);
 
     /**
+     * Returns the first y value that match a given predicate
+     */
+    public abstract int getFirstHeightInColumn(int x, int z, Predicate<Block> predicate);
+
+    /**
      * Returns the block column at x,z of length: worldHeight, this column has 3 blocks tops, default block, default fluid and air
      */
     public abstract Block[] getColumnAt(int x, int z);
+
+
 
     /**
      * Returns the block at x,y,z, this block can be 3 blocks tops, default block, default fluid and air
