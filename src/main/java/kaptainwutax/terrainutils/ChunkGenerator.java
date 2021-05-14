@@ -18,9 +18,9 @@ public abstract class ChunkGenerator {
     protected final BiomeSource biomeSource;
     protected final MCVersion version;
     // only 5 blocks are registered here END_STONE, AIR, LAVA, WATER, NETHERRACK, STONE
-    public Predicate<Block> WORLD_SURFACE_WG=b->b.getId()!= Blocks.AIR.getId();
+    public static Predicate<Block> WORLD_SURFACE_WG=b->b.getId()!= Blocks.AIR.getId();
     // only fluid have no colliders
-    public Predicate<Block> OCEAN_FLOOR_WG=b->b.getId()!= Blocks.AIR.getId() && b.getId()!= Blocks.WATER.getId() && b.getId()!= Blocks.LAVA.getId();
+    public static Predicate<Block> OCEAN_FLOOR_WG=b->b.getId()!= Blocks.AIR.getId() && b.getId()!= Blocks.WATER.getId() && b.getId()!= Blocks.LAVA.getId();
     // there is more predicate but terrainutils is not ready yet
 
     public ChunkGenerator(BiomeSource biomeSource) {
