@@ -2,6 +2,7 @@ package kaptainwutax.terrainutils;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.mcutils.block.Block;
+import kaptainwutax.mcutils.block.Blocks;
 import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.mcutils.version.MCVersion;
 import kaptainwutax.mcutils.version.UnsupportedVersion;
@@ -16,6 +17,11 @@ public abstract class ChunkGenerator {
     protected final boolean amplified;
     protected final BiomeSource biomeSource;
     protected final MCVersion version;
+    // only 5 blocks are registered here END_STONE, AIR, LAVA, WATER, NETHERRACK, STONE
+    public Predicate<Block> WORLD_SURFACE_WG=b->b.getId()!= Blocks.AIR.getId();
+    // only fluid have no colliders
+    public Predicate<Block> OCEAN_FLOOR_WG=b->b.getId()!= Blocks.AIR.getId() && b.getId()!= Blocks.WATER.getId() && b.getId()!= Blocks.LAVA.getId();
+    // there is more predicate but terrainutils is not ready yet
 
     public ChunkGenerator(BiomeSource biomeSource) {
         this.biomeSource = biomeSource;
