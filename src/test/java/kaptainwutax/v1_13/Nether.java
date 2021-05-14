@@ -52,7 +52,7 @@ public class Nether {
         Block[] column = cg.getColumnAt(0, 0);
         assertEquals(column.length,this.column.length);
         for (int y = 0; y < column.length; y++) {
-            assertEquals(column[y],this.column[y]);
+            assertEquals(column[y],this.column[y],"Invalid at y:"+y);
         }
     }
 
@@ -65,7 +65,7 @@ public class Nether {
         Block[] column = cg.getColumnAt(0, 0);
         assertEquals(column.length,this.column.length);
         for (int y = 0; y < column.length; y++) {
-            assertEquals(column[y],this.column[y]);
+            assertEquals(column[y],this.column[y],"Invalid at y:"+y);
         }
     }
 

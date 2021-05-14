@@ -284,12 +284,13 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
 
     protected double[] getDepthAndScale(int x, int z) {
         double[] depthAndScale = new double[2];
+        int sampleRange=2;
         float weightedScale = 0.0F;
         float weightedDepth = 0.0F;
         float totalWeight = 0.0F;
         float depthAtCenter = this.biomeSource.getBiomeForNoiseGen(x, this.getSeaLevel(), z).getDepth();
-        for (int rx = -2; rx <= 2; ++rx) {
-            for (int rz = -2; rz <= 2; ++rz) {
+        for (int rx = -sampleRange; rx <= sampleRange; ++rx) {
+            for (int rz = -sampleRange; rz <= sampleRange; ++rz) {
                 Biome biome = this.biomeSource.getBiomeForNoiseGen(x + rx, this.getSeaLevel(), z + rz);
                 float depth = biome.getDepth();
                 float scale = biome.getScale();
@@ -331,13 +332,15 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         noise = noise < 0.0D ? -noise * 0.3D : noise;
         // 64/17=3.7647058823529416D factor between versions except for the 24 which is 8.19?
         if (version.isNewerOrEqualTo(MCVersion.v1_15)) {
+            // this must be an human error, I can't figure out how it was obtained
             noise = noise * 24.575625D - 2.0D; // this looks close to 17/64*100-2=24.5625 (-0.013124999999998721?)
+            // or it is 3*15*17*257/8000 ( I think I will use that one since 3 and 17 appears as well as our old 8000 and 257 is kinda 256 or 255+2)
             if (noise < 0.0D) {
-                return noise * 0.009486607142857142D;
-                //return 17.0D * noise / 28.0D / 64.0D;
+               // return noise * 0.009486607142857142D;
+                return 17.0D * noise / 28.0D / 64.0D;
             }
-            return Math.min(noise, 1.0D) * 0.006640625D;
-            //return Math.min(noise, 1.0D) *17.0D / 40.0D / 64.0D;
+            //return Math.min(noise, 1.0D) * 0.006640625D;
+            return Math.min(noise, 1.0D) *17.0D / 40.0D / 64.0D;
         }
 
         noise = noise * 3.0D - 2.0D;
