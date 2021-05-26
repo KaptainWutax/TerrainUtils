@@ -3,7 +3,7 @@ package kaptainwutax;
 import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.mcutils.version.MCVersion;
-import kaptainwutax.terrainutils.ChunkGenerator;
+import kaptainwutax.terrainutils.TerrainGenerator;
 
 import java.util.Random;
 
@@ -14,7 +14,7 @@ public class TestFramework {
 
     public static void randomChunkGen(MCVersion version, long seed, Dimension dimension, int size, long randomSeed, int[] heightMap) {
         BiomeSource bs = BiomeSource.of(dimension, version, seed);
-        ChunkGenerator cg = ChunkGenerator.of(dimension, bs);
+        TerrainGenerator cg = TerrainGenerator.of(dimension, bs);
         assert cg != null;
         Random r = new Random(randomSeed);
         for (int i = 0; i < size; i++) {
@@ -30,7 +30,7 @@ public class TestFramework {
 
     public static void testSinglePoint(MCVersion version, long seed, Dimension dimension, int x, int z, int expectedY) {
         BiomeSource bs = BiomeSource.of(dimension, version, seed);
-        ChunkGenerator cg = ChunkGenerator.of(dimension, bs);
+        TerrainGenerator cg = TerrainGenerator.of(dimension, bs);
         assert cg != null;
         assertEquals(cg.getHeightOnGround(x, z), expectedY);
     }

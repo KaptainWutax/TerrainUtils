@@ -4,7 +4,7 @@ import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.mcutils.block.Block;
 import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.mcutils.version.MCVersion;
-import kaptainwutax.terrainutils.ChunkGenerator;
+import kaptainwutax.terrainutils.TerrainGenerator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +48,7 @@ public class Nether {
     @DisplayName("Test Height map version 1.15 heightmap")
     public void column() {
         BiomeSource bs = BiomeSource.of(Dimension.NETHER, MCVersion.v1_15, 541515181818L);
-        ChunkGenerator cg = ChunkGenerator.of(Dimension.NETHER, bs);
+        TerrainGenerator cg = TerrainGenerator.of(Dimension.NETHER, bs);
         assert cg != null;
         Block[] column = cg.getColumnAt(0, 0);
         assertEquals(column.length,this.column.length);
@@ -61,7 +61,7 @@ public class Nether {
     @DisplayName("Test Height map version 1.15 heightmap 2")
     public void column2() {
         BiomeSource bs = BiomeSource.of(Dimension.NETHER, MCVersion.v1_15, 541515181818L);
-        ChunkGenerator cg = ChunkGenerator.of(Dimension.NETHER, bs);
+        TerrainGenerator cg = TerrainGenerator.of(Dimension.NETHER, bs);
         assert cg != null;
         Block[] column = cg.getColumnAt(0, 0);
         assertEquals(column.length,this.column.length);

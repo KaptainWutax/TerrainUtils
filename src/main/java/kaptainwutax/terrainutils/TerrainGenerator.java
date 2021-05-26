@@ -6,13 +6,13 @@ import kaptainwutax.mcutils.block.Blocks;
 import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.mcutils.version.MCVersion;
 import kaptainwutax.mcutils.version.UnsupportedVersion;
-import kaptainwutax.terrainutils.terrain.EndChunkGenerator;
-import kaptainwutax.terrainutils.terrain.NetherChunkGenerator;
-import kaptainwutax.terrainutils.terrain.OverworldChunkGenerator;
+import kaptainwutax.terrainutils.terrain.EndTerrainGenerator;
+import kaptainwutax.terrainutils.terrain.NetherTerrainGenerator;
+import kaptainwutax.terrainutils.terrain.OverworldTerrainGenerator;
 
 import java.util.function.Predicate;
 
-public abstract class ChunkGenerator {
+public abstract class TerrainGenerator {
 
     protected final boolean amplified;
     protected final BiomeSource biomeSource;
@@ -23,7 +23,7 @@ public abstract class ChunkGenerator {
     public static Predicate<Block> OCEAN_FLOOR_WG=b->b.getId()!= Blocks.AIR.getId() && b.getId()!= Blocks.WATER.getId() && b.getId()!= Blocks.LAVA.getId();
     // there is more predicate but terrainutils is not ready yet
 
-    public ChunkGenerator(BiomeSource biomeSource) {
+    public TerrainGenerator(BiomeSource biomeSource) {
         this.biomeSource = biomeSource;
         this.version = biomeSource.getVersion();
         this.amplified = false;
@@ -35,17 +35,24 @@ public abstract class ChunkGenerator {
         }
     }
 
-    public static Factory factory(Dimension dimension, BiomeSource biomeSource) {
-        if (dimension == Dimension.OVERWORLD) return OverworldChunkGenerator::new;
-        else if (dimension == Dimension.NETHER) return NetherChunkGenerator::new;
-        else if (dimension == Dimension.END) return EndChunkGenerator::new;
+    public static Factory factory(Dimension dimension) {
+        if (dimension == Dimension.OVERWORLD) return OverworldTerrainGenerator::new;
+        else if (dimension == Dimension.NETHER) return NetherTerrainGenerator::new;
+        else if (dimension == Dimension.END) return EndTerrainGenerator::new;
         return null;
     }
 
-    public static ChunkGenerator of(Dimension dimension, BiomeSource biomeSource) {
-        Factory factory = factory(dimension, biomeSource);
+    public static TerrainGenerator of(Dimension dimension, BiomeSource biomeSource) {
+        Factory factory = factory(dimension);
         return factory == null ? null : factory.create(biomeSource);
     }
+
+    public static TerrainGenerator of(BiomeSource biomeSource) {
+        Factory factory = factory(biomeSource.getDimension());
+        return factory == null ? null : factory.create(biomeSource);
+    }
+
+    public abstract Dimension getDimension();
 
     public BiomeSource getBiomeSource() {
         return biomeSource;
@@ -99,8 +106,6 @@ public abstract class ChunkGenerator {
      */
     public abstract Block[] getColumnAt(int x, int z);
 
-
-
     /**
      * Returns the block at x,y,z, this block can be 3 blocks tops, default block, default fluid and air
      */
@@ -108,7 +113,7 @@ public abstract class ChunkGenerator {
 
     @FunctionalInterface
     public interface Factory {
-        ChunkGenerator create(BiomeSource biomeSource);
+        TerrainGenerator create(BiomeSource biomeSource);
     }
 
 }

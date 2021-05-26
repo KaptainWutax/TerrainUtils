@@ -1,12 +1,3 @@
-# TerrainUtils
-
-A library to provide terrain generation, supports only 1.14+ for now
-
-## Usage
-
-The whole exposed API holds in TerrainGenerator, calling specific things on SurfaceGenerator or lower model is not recommended
-
-```java
 package kaptainwutax.terrainutils;
 
 import kaptainwutax.biomeutils.source.BiomeSource;
@@ -30,11 +21,3 @@ public class Main {
 		int surfaceBlockAbove=terrainGenerator.getHeightOnGround(0,0);
 	}
 }
-```
-
-## Legal mentions
-Licensed under MIT
-
-Maintained by Neil and KaptainWutax.
-
-NOT OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG.

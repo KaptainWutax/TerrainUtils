@@ -5,11 +5,12 @@ import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.biomeutils.source.EndBiomeSource;
 import kaptainwutax.mcutils.block.Block;
 import kaptainwutax.mcutils.block.Blocks;
+import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
-public class EndChunkGenerator extends SurfaceChunkGenerator {
+public class EndTerrainGenerator extends SurfaceGenerator {
 
-    public EndChunkGenerator(BiomeSource biomeSource) {
+    public EndTerrainGenerator(BiomeSource biomeSource) {
         super(biomeSource, 128, 2, 1,
                 NoiseSettings.create(2.0, 1.0, 80.0, 160.0)
                         .addTopSlide(-3000, 64, -46)
@@ -25,6 +26,11 @@ public class EndChunkGenerator extends SurfaceChunkGenerator {
     @Override
     public Block getDefaultFluid() {
         return Blocks.AIR;
+    }
+
+    @Override
+    public Dimension getDimension() {
+        return Dimension.END;
     }
 
     @Override

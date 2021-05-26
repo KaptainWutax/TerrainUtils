@@ -3,12 +3,13 @@ package kaptainwutax.terrainutils.terrain;
 import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.mcutils.block.Block;
 import kaptainwutax.mcutils.block.Blocks;
+import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.mcutils.version.MCVersion;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
-public class NetherChunkGenerator extends SurfaceChunkGenerator {
+public class NetherTerrainGenerator extends SurfaceGenerator {
 
-    public NetherChunkGenerator(BiomeSource biomeSource) {
+    public NetherTerrainGenerator(BiomeSource biomeSource) {
         super(biomeSource, 128, 1, 2,
                 NoiseSettings.create(1.0, 3.0, 80.0, 60.0)
                         .addTopSlide(120, 3, 0)
@@ -24,6 +25,11 @@ public class NetherChunkGenerator extends SurfaceChunkGenerator {
     @Override
     public Block getDefaultBlock() {
         return Blocks.NETHERRACK;
+    }
+
+    @Override
+    public Dimension getDimension() {
+        return Dimension.NETHER;
     }
 
     @Override

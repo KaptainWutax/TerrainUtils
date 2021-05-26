@@ -11,7 +11,7 @@ import kaptainwutax.noiseutils.noise.NoiseSampler;
 import kaptainwutax.noiseutils.perlin.OctavePerlinNoiseSampler;
 import kaptainwutax.noiseutils.simplex.OctaveSimplexNoiseSampler;
 import kaptainwutax.noiseutils.utils.MathHelper;
-import kaptainwutax.terrainutils.ChunkGenerator;
+import kaptainwutax.terrainutils.TerrainGenerator;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 import java.util.HashMap;
@@ -23,7 +23,7 @@ import static kaptainwutax.noiseutils.utils.MathHelper.maintainPrecision;
 import static kaptainwutax.terrainutils.utils.MathHelper.clampedLerp;
 import static kaptainwutax.terrainutils.utils.MathHelper.sqrt;
 
-public abstract class SurfaceChunkGenerator extends ChunkGenerator {
+public abstract class SurfaceGenerator extends TerrainGenerator {
 
     protected static final float[] BIOME_WEIGHT_TABLE;
 
@@ -55,14 +55,14 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
     private final Map<Long, Block[]> columnCache = new HashMap<>();
     private final int worldHeight;
 
-    public SurfaceChunkGenerator(BiomeSource biomeSource,
-                                 int worldHeight,
-                                 int horizontalNoiseResolution,
-                                 int verticalNoiseResolution,
-                                 NoiseSettings noiseSettings,
-                                 double densityFactor,
-                                 double densityOffset,
-                                 boolean useSimplexNoise) {
+    public SurfaceGenerator(BiomeSource biomeSource,
+                            int worldHeight,
+                            int horizontalNoiseResolution,
+                            int verticalNoiseResolution,
+                            NoiseSettings noiseSettings,
+                            double densityFactor,
+                            double densityOffset,
+                            boolean useSimplexNoise) {
         super(biomeSource);
         this.worldHeight = worldHeight;
         this.chunkHeight = verticalNoiseResolution * 4;
@@ -270,7 +270,6 @@ public abstract class SurfaceChunkGenerator extends ChunkGenerator {
         }
         return 0;
     }
-
 
     @Override
     public int getHeightOnGround(int x, int z) {
