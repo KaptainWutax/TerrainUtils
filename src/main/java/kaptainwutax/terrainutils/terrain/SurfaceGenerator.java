@@ -160,16 +160,15 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	}
 
 	protected void sampleNoiseColumn(double[] buffer, int x, int z) {
-		// this is not yet correct (look at biomes noise probably FIXME)
 		double[] ds = this.getDepthAndScale(x, z);
 		double depth = ds[0];
 		double scale = ds[1];
 		double sizeY = this.getNoiseSizeY() - 4;
-		double m = 0.0D;
+		double minY = 0.0D;
 		double randomOffset = this.biomeSource.getDimension() == Dimension.OVERWORLD ? this.sampleNoise(x, z) : 0.0D;
 		for(int y = 0; y < this.getNoiseSizeY(); ++y) {
 			double noise = this.sampleNoise(x, y, z);
-			if(version.isNewerOrEqualTo(MCVersion.v1_15)) {
+			if(version.isNewerOrEqualTo(MCVersion.v1_16)) {
 				double fallOff = 1.0D - (double)y * 2.0D / (double)this.noiseSizeY + randomOffset;
 				fallOff = fallOff * densityFactor + densityOffset;
 				fallOff = (fallOff + depth) * scale;
@@ -185,8 +184,8 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 				// fixme 1.15+
 				if((double)y > sizeY) {
 					noise = clampedLerp(noise, this.noiseSettings.topSlideSettings.target, (y - sizeY - this.noiseSettings.topSlideSettings.offset) / (double)this.noiseSettings.topSlideSettings.size);
-				} else if((double)y < m) {
-					noise = clampedLerp(noise, this.noiseSettings.bottomSlideSettings.target, (m - (double)y) / (m - 1.0D));
+				} else if((double)y < minY) {
+					noise = clampedLerp(noise, this.noiseSettings.bottomSlideSettings.target, (minY - (double)y) / (minY - 1.0D));
 				}
 			}
 			buffer[y] = noise;
@@ -323,17 +322,15 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		return depthAndScale;
 	}
 
-	private double sampleNoise(int x, int y) {
-		double noise = this.noiseSampler.sample(x * 200, 10.0D, y * 200, 1.0D, 0.0D, true);
-		if(version.isOlderThan(MCVersion.v1_15)) {
-			noise /= 8000.0D;
+	private double sampleNoise(int x, int z) {
+		double noise = this.noiseSampler.sample(x * 200, 10.0D, z * 200, 1.0D, 0.0D, true);
+		if(version.isOlderThan(MCVersion.v1_16)) {
+			noise *= 65535.0D / 8000.0D;
 		}
 		noise = noise < 0.0D ? -noise * 0.3D : noise;
-		// 64/17=3.7647058823529416D factor between versions except for the 24 which is 8.19?
-		if(version.isNewerOrEqualTo(MCVersion.v1_15)) {
-			// this must be an human error, I can't figure out how it was obtained
-			noise = noise * 24.575625D - 2.0D; // this looks close to 17/64*100-2=24.5625 (-0.013124999999998721?)
-			// or it is 3*15*17*257/8000 ( I think I will use that one since 3 and 17 appears as well as our old 8000 and 257 is kinda 256 or 255+2)
+		if(version.isNewerOrEqualTo(MCVersion.v1_16)) {
+			noise = noise * 3.0D * 65535.0D / 8000.0D - 2.0D;
+//			noise = noise * 24.575625D - 2.0D;
 			if(noise < 0.0D) {
 				// return noise * 0.009486607142857142D;
 				return 17.0D * noise / 28.0D / 64.0D;

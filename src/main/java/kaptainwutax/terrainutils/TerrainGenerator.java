@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 
 public abstract class TerrainGenerator {
 
-	protected final boolean amplified;
+	protected boolean amplified;
 	protected final BiomeSource biomeSource;
 	protected final MCVersion version;
 	// only 5 blocks are registered here END_STONE, AIR, LAVA, WATER, NETHERRACK, STONE
@@ -30,9 +30,14 @@ public abstract class TerrainGenerator {
 		if(this.version.isOlderThan(MCVersion.v1_13)) {
 			throw new UnsupportedVersion(this.version, "chunk generator");
 		}
-		if(this.version.isOlderThan(MCVersion.v1_16)) {
+		if(this.version.isOlderThan(MCVersion.v1_15)) {
 			System.out.println("WARNING THIS VERSION IS UNTESTED YET");
 		}
+	}
+
+	public TerrainGenerator setAmplified(boolean amplified){
+		this.amplified=amplified;
+		return this;
 	}
 
 	public static Factory factory(Dimension dimension) {
