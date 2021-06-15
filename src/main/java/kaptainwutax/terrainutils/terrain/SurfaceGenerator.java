@@ -128,7 +128,7 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	}
 
 	public double getMaxNoiseY() {
-		return (double)this.noiseSizeY()-4.0D;
+		return (double)this.noiseSizeY() - 4.0D;
 	}
 
 	public double getMinNoiseY() {
@@ -293,10 +293,11 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		float weightedScale = 0.0F;
 		float weightedDepth = 0.0F;
 		float totalWeight = 0.0F;
-		float depthAtCenter = this.biomeSource.getBiomeForNoiseGen(x, this.getSeaLevel(), z).getDepth();
+		Biome biome= this.biomeSource.getBiomeForNoiseGen(x, this.getSeaLevel(), z);
+		float depthAtCenter =biome.getDepth();
 		for(int rx = -sampleRange; rx <= sampleRange; ++rx) {
 			for(int rz = -sampleRange; rz <= sampleRange; ++rz) {
-				Biome biome = this.biomeSource.getBiomeForNoiseGen(x + rx, this.getSeaLevel(), z + rz);
+				biome = this.biomeSource.getBiomeForNoiseGen(x + rx, this.getSeaLevel(), z + rz);
 				float depth = biome.getDepth();
 				float scale = biome.getScale();
 				if(this.amplified && depth > 0.0F) {
@@ -332,7 +333,10 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	private double sampleNoise(int x, int z) {
 		double noise = this.noiseSampler.sample(x * 200, 10.0D, z * 200, 1.0D, 0.0D, true);
 		if(version.isOlderThan(MCVersion.v1_16)) {
-			noise *= 65535.0D / 8000.0D;
+			if(version.isNewerOrEqualTo(MCVersion.v1_15)) {
+				noise *= 65535.0D;
+			}
+			noise /= 8000.0D;
 		}
 		noise = noise < 0.0D ? -noise * 0.3D : noise;
 		if(version.isNewerOrEqualTo(MCVersion.v1_16)) {
