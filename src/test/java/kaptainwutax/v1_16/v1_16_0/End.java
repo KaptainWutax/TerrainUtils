@@ -145,4 +145,8 @@ public class End {
 			"\t\tif (PRINT) System.out.println();\n" +
 			"\t\tif (!PRINT) System.out.println(hash+\"L\");");
 	}
+
+	public static void main(String[] args) {
+		getProgram();
+	}
 }
