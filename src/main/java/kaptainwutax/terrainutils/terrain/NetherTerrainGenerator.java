@@ -9,39 +9,39 @@ import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 public class NetherTerrainGenerator extends SurfaceGenerator {
 
-    public NetherTerrainGenerator(BiomeSource biomeSource) {
-        super(biomeSource, 128, 1, 2,
-                NoiseSettings.create(1.0, 3.0, 80.0, 60.0)
-                        .addTopSlide(120, 3, 0)
-                        .addBottomSlide(320, 4, -1),
-                0.0, 0.019921875, false);
-    }
+	public NetherTerrainGenerator(BiomeSource biomeSource) {
+		super(biomeSource, 128, 1, 2,
+			NoiseSettings.create(1.0, 3.0, 80.0, 60.0)
+				.addTopSlide(120, 3, 0)
+				.addBottomSlide(320, 4, -1),
+			0.0, 0.019921875, false);
+	}
 
-    @Override
-    public int getSeaLevel() {
-        return 32;
-    }
+	@Override
+	public int getSeaLevel() {
+		return 32;
+	}
 
-    @Override
-    public Block getDefaultBlock() {
-        return Blocks.NETHERRACK;
-    }
+	@Override
+	public Block getDefaultBlock() {
+		return Blocks.NETHERRACK;
+	}
 
-    @Override
-    public Dimension getDimension() {
-        return Dimension.NETHER;
-    }
+	@Override
+	public Dimension getDimension() {
+		return Dimension.NETHER;
+	}
 
-    @Override
-    public Block getDefaultFluid() {
-        return Blocks.LAVA;
-    }
+	@Override
+	public Block getDefaultFluid() {
+		return Blocks.LAVA;
+	}
 
-    @Override
-    protected double[] getDepthAndScale(int x, int z) {
-        if (this.version.isNewerOrEqualTo(MCVersion.v1_16)) {
-            return super.getDepthAndScale(x, z);
-        }
-        return new double[] {0.0, 0.0};
-    }
+	@Override
+	protected double[] getDepthAndScale(int x, int z) {
+		if(this.version.isNewerOrEqualTo(MCVersion.v1_16)) {
+			return super.getDepthAndScale(x, z);
+		}
+		return new double[] {0.0, 0.0};
+	}
 }
