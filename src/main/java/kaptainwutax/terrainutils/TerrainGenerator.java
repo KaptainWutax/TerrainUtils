@@ -27,10 +27,10 @@ public abstract class TerrainGenerator {
 		this.biomeSource = biomeSource;
 		this.version = biomeSource.getVersion();
 		this.amplified = false;
-		if(this.version.isOlderThan(MCVersion.v1_13)) {
+		if(this.version.isOlderThan(MCVersion.v1_8)) {
 			throw new UnsupportedVersion(this.version, "chunk generator");
 		}
-		if(this.version.isOlderThan(MCVersion.v1_15)) {
+		if(this.version.isOlderThan(MCVersion.v1_14)) {
 			System.out.println("WARNING THIS VERSION IS UNTESTED YET");
 		}
 	}
