@@ -123,8 +123,16 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 
 	public abstract Block getDefaultFluid();
 
-	public int getNoiseSizeY() {
+	public int noiseSizeY() {
 		return this.noiseSizeY + 1;
+	}
+
+	public double getMaxNoiseY() {
+		return (double)this.noiseSizeY()-4.0D;
+	}
+
+	public double getMinNoiseY() {
+		return 0.0D;
 	}
 
 	private double sampleNoise(int x, int y, int z) {
@@ -163,10 +171,10 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		double[] ds = this.getDepthAndScale(x, z);
 		double depth = ds[0];
 		double scale = ds[1];
-		double sizeY = this.getNoiseSizeY() - 4;
-		double minY = 0.0D;
+		double sizeY = this.getMaxNoiseY();
+		double minY = this.getMinNoiseY();
 		double randomOffset = this.biomeSource.getDimension() == Dimension.OVERWORLD ? this.sampleNoise(x, z) : 0.0D;
-		for(int y = 0; y < this.getNoiseSizeY(); ++y) {
+		for(int y = 0; y < this.noiseSizeY(); ++y) {
 			double noise = this.sampleNoise(x, y, z);
 			if(version.isNewerOrEqualTo(MCVersion.v1_16)) {
 				double fallOff = 1.0D - (double)y * 2.0D / (double)this.noiseSizeY + randomOffset;
@@ -181,7 +189,6 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 				}
 			} else {
 				noise -= this.computeNoiseFalloff(depth, scale, y);
-				// fixme 1.15+
 				if((double)y > sizeY) {
 					noise = clampedLerp(noise, this.noiseSettings.topSlideSettings.target, (y - sizeY - this.noiseSettings.topSlideSettings.offset) / (double)this.noiseSettings.topSlideSettings.size);
 				} else if((double)y < minY) {

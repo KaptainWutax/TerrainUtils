@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static kaptainwutax.TestFramework.randomChunkGen;
 import static kaptainwutax.TestFramework.randomHashGen;
+import static kaptainwutax.TestFramework.testSinglePoint;
 
 @DisplayName("Minecraft v1.15 End")
 @Tag("v1.15")
@@ -72,77 +73,58 @@ public class End {
 		};
 
 	@Test
-	@DisplayName("Test Height map version 1.16 size 16")
+	@DisplayName("Test Height map version 1.15 size 16")
 	public void size16() {
 		randomChunkGen(VERSION, 213232132139149124L, DIMENSION, 16, 21382138983289132L, size16);
 	}
 
 	@Test
-	@DisplayName("Test Height version 1.16 map size 32")
+	@DisplayName("Test Height version 1.15 map size 32")
 	public void size32() {
 		randomChunkGen(VERSION, 213232132139149124L, DIMENSION, 32, 21382138983289132L, size32);
 	}
 
 	@Test
-	@DisplayName("Test Height version 1.1 map size 128")
+	@DisplayName("Test Height version 1.15 map size 128")
 	public void size128() {
 		randomHashGen(VERSION, 213232132139149124L, DIMENSION, 128, 21382138983289132L, -2403508787974715586L);
 	}
 
 
 	public static void getProgram() {
-		System.out.println("Bootstrap.bootStrap();\n" +
-			"\t\tMutableRegistry<Biome> biomeRegistry = DynamicRegistries.builtin().registryOrThrow(Registry.BIOME_REGISTRY);\n" +
-			"\t\tRegistry<DimensionSettings> dimensionSettingsRegistry = DynamicRegistries.builtin().registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY);\n" +
-			"\t\tlong seed = 213232132139149124L;\n" +
-			"\t\tNoiseChunkGenerator noiseChunkGenerator;\n" +
-			"\t\tint dimension = 1;\n" +
-			"\t\tif (dimension == 0) {\n" +
-			"\t\t\t// OVERWORLD\n" +
-			"\t\t\tnoiseChunkGenerator = new NoiseChunkGenerator(\n" +
-			"\t\t\t\t\tnew OverworldBiomeProvider(seed, false, false, biomeRegistry), seed,\n" +
-			"\t\t\t\t\t() -> dimensionSettingsRegistry.getOrThrow(DimensionSettings.OVERWORLD));\n" +
-			"\t\t} else if (dimension == -1) {\n" +
-			"\t\t\t// Nether\n" +
-			"\t\t\tnoiseChunkGenerator = new NoiseChunkGenerator(\n" +
-			"\t\t\t\t\tNetherBiomeProvider.Preset.NETHER.biomeSource(biomeRegistry, seed), seed,\n" +
-			"\t\t\t\t\t() -> dimensionSettingsRegistry.getOrThrow(DimensionSettings.NETHER));\n" +
-			"\t\t} else {\n" +
-			"\t\t\t// End\n" +
-			"\t\t\tnoiseChunkGenerator = new NoiseChunkGenerator(\n" +
-			"\t\t\t\t\tnew EndBiomeProvider(biomeRegistry, seed), seed,\n" +
-			"\t\t\t\t\t() -> dimensionSettingsRegistry.getOrThrow(DimensionSettings.END));\n" +
-			"\t\t}\n" +
-			"\t\tint size = 8;\n" +
-			"\t\tRandom r = new Random(21382138983289132L);\n" +
-			"\t\tboolean PRINT = false;\n" +
-			"\t\tif (PRINT) System.out.println(\"{\");\n" +
-			"\t\tlong hash = 0;\n" +
-			"\t\tfor (int i = 0; i < size; i++) {\n" +
-			"\t\t\tfor (int j = 0; j < size; j++) {\n" +
-			"\t\t\t\tint x = r.nextInt(512000)-25600;\n" +
-			"\t\t\t\tint z = r.nextInt(512000)-25600;\n" +
-			"\t\t\t\tif (dimension==-1){\n" +
-			"\t\t\t\t\tBlockreader blockReader= (Blockreader) noiseChunkGenerator.getBaseColumn(x,z);\n" +
-			"\t\t\t\t\tif (PRINT) System.out.print(\"{\");\n" +
-			"\t\t\t\t\tint y=0;\n" +
-			"\t\t\t\t\tfor (BlockState blockState:blockReader.column){\n" +
-			"\t\t\t\t\t\tString block=Registry.BLOCK.getKey(blockState.getBlock()).getPath().toUpperCase();\n" +
-			"\t\t\t\t\t\tif (PRINT)System.out.print(block+\",\");\n" +
-			"\t\t\t\t\t\thash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | (long) block.hashCode()*y++;\n" +
-			"\t\t\t\t\t}\n" +
-			"\t\t\t\t\tif (PRINT)System.out.print(\"},\");\n" +
-			"\t\t\t\t\tif (PRINT)System.out.println();\n" +
-			"\t\t\t\t}else{\n" +
-			"\t\t\t\t\tint y = noiseChunkGenerator.getHeightOnGround(x, z, Heightmap.Type.OCEAN_FLOOR_WG);\n" +
-			"\t\t\t\t\thash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;\n" +
-			"\t\t\t\t\tif (PRINT) System.out.printf(\"%d ,\", y);\n" +
-			"\t\t\t\t}\n" +
-			"\t\t\t}\n" +
-			"\t\t\tif (PRINT && dimension!=-1) System.out.println();\n" +
-			"\t\t}\n" +
-			"\t\tif (PRINT) System.out.print(\"};\");\n" +
-			"\t\tif (PRINT) System.out.println();\n" +
-			"\t\tif (!PRINT) System.out.println(hash+\"L\");");
+		System.out.println("Bootstrap.register();\n" +
+			"        long seed = 213232132139149124L;\n" +
+			"        World world=new ClientWorld(null,\n" +
+			"                new WorldSettings(\n" +
+			"//                        WorldInfo.byHashing(seed),\n" +
+			"                        seed,\n" +
+			"                        GameType.NOT_SET,\n" +
+			"                        false,\n" +
+			"                        false,\n" +
+			"                        WorldType.DEFAULT),\n" +
+			"                THE_END,\n" +
+			"                0,\n" +
+			"                null,\n" +
+			"                null);\n" +
+			"        ChunkGenerator<?> chunkGenerator= THE_END.create(world).createChunkGenerator();\n" +
+			"        int yy= chunkGenerator.getHeightOnGround(35322,78147, Heightmap.Type.WORLD_SURFACE_WG);\n" +
+			"        int size = 128;\n" +
+			"        Random r = new Random(21382138983289132L);\n" +
+			"        boolean PRINT = false;\n" +
+			"        if (PRINT) System.out.println(\"{\");\n" +
+			"        long hash = 0;\n" +
+			"        for (int i = 0; i < size; i++) {\n" +
+			"            for (int j = 0; j < size; j++) {\n" +
+			"                int x = r.nextInt(512000)-25600;\n" +
+			"                int z = r.nextInt(512000)-25600;\n" +
+			"                int y = chunkGenerator.getHeightOnGround(x, z, Heightmap.Type.WORLD_SURFACE_WG);\n" +
+			"                hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;\n" +
+			"                if (PRINT) System.out.printf(\"%d ,\", y);\n" +
+			"            }\n" +
+			"            if (PRINT)System.out.println();\n" +
+			"        }\n" +
+			"        if (PRINT) System.out.print(\"};\");\n" +
+			"        if (PRINT) System.out.println();\n" +
+			"        if (!PRINT) System.out.println(hash+\"L\");");
 	}
 }

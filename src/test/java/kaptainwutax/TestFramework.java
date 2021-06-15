@@ -68,7 +68,6 @@ public class TestFramework {
 				for(int y = 0; y < cg.getMaxWorldHeight(); y++) {
 					Block current = column[y];
 					hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | (long)current.getName().toUpperCase().hashCode() * y;
-					System.out.println(hash + " " + current.getName().toUpperCase().hashCode() + " " + current.getName().toUpperCase());
 				}
 			}
 		}
