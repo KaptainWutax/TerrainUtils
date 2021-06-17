@@ -167,6 +167,28 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		return clampedLerp(minNoise / 512.0D, maxNoise / 512.0D, (mainNoise / 10.0D + 1.0D) / 2.0D);
 	}
 
+	private double sampleNoise(OctavePerlinNoiseSampler sampler,int x,int y,int z, double noiseScaleX, double noiseScaleY, double noiseScaleZ,int octaveCount){
+		// replace octave count with the one in noiseutils
+		double noise = 0.0D;
+		double persistence = 1.0D;
+		for(int octave = 0; octave < octaveCount; ++octave) {
+			double X = (double)x * persistence * noiseScaleX;
+			double Y = (double)y * persistence * noiseScaleY;
+			double Z = (double)z * persistence * noiseScaleZ;
+			long intX = MathHelper.lfloor(X);
+			long intZ = MathHelper.lfloor(Z);
+			X = X - (double)intX;
+			Z = Z - (double)intZ;
+			intX = intX % 16777216L;
+			intZ = intZ % 16777216L;
+			X = X + (double)intX;
+			Z = Z + (double)intZ;
+			noise+=sampler.getOctave(octave).sample(X*noiseScaleX*persistence,Y*noiseScaleX*persistence,Z*noiseScaleX*persistence,0.0D,0.0D)/persistence;
+			persistence /= 2.0D;
+		}
+		return noise;
+	}
+
 	protected void sampleNoiseColumn(double[] buffer, int x, int z) {
 		double[] ds = this.getDepthAndScale(x, z);
 		double depth = ds[0];
@@ -175,6 +197,22 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		double minY = this.getMinNoiseY();
 		double randomOffset = this.biomeSource.getDimension() == Dimension.OVERWORLD ? this.sampleNoise(x, z) : 0.0D;
 		for(int y = 0; y < this.noiseSizeY(); ++y) {
+			if (version.isOlderOrEqualTo(MCVersion.v1_13_2)){
+				// find how to merge this with sampleNoise logic
+				double fallOff=computeNoiseFalloff(depth,scale,y);
+				double minNoise=this.sampleNoise(this.minLimitPerlinNoise,x,y,z,684.412F,684.412F,684.412F,16)/512.0D;
+				double maxNoise=this.sampleNoise(this.maxLimitPerlinNoise,x,y,z,684.412F,684.412F,684.412F,16)/512.0D;
+				double mainNoise=this.sampleNoise(this.mainPerlinNoise,x,y,z,684.412F/80.0f,684.412F/160.0f,684.412F/80.0f,8);
+				mainNoise=(mainNoise/10.0D+1.0D)/2.0D;
+				double noise= kaptainwutax.terrainutils.utils.MathHelper.clampedLerp(minNoise,maxNoise,mainNoise)-fallOff;
+				if (y>29){
+					double offset=(float)(y-29)/3.0F;
+					noise=noise*(1.0D-offset)-10.0D*offset;
+				}
+				buffer[y] = noise;
+				continue;
+			}
+			// everything below is only for 1.14+
 			double noise = this.sampleNoise(x, y, z);
 			if(version.isNewerOrEqualTo(MCVersion.v1_16)) {
 				double fallOff = 1.0D - (double)y * 2.0D / (double)this.noiseSizeY + randomOffset;
@@ -327,11 +365,12 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			double noise = this.sampleNoise(x, z);
 			depthAndScale[0] = (double)weightedDepth + noise;
 			if(version.isOlderOrEqualTo(MCVersion.v1_13_2)) {
-				double depth = weightedDepth;
-				depth = depth + noise * 0.2D;
-				depth = depth * 8.5D / 8.0D;
-				depth = 8.5D + depth * 4.0D;
-				depthAndScale[0] = depth;
+
+				// double depth = weightedDepth;
+				//		depth = depth + noise * 0.2D;
+				//		depth = depth * this.settings.spread() / 8.0D;
+				//		depth = this.settings.spread() + depth * 4.0D;
+				depthAndScale[0] = weightedDepth + noise * 0.2D;
 			}
 			depthAndScale[1] = weightedScale;
 		}
