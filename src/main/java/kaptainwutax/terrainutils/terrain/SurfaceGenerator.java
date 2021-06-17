@@ -37,7 +37,7 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		}
 	}
 
-	protected final OctavePerlinNoiseSampler noiseSampler;
+	protected final OctavePerlinNoiseSampler depthNoise;
 	protected final ChunkRand random;
 	private final int chunkHeight;
 	private final int chunkWidth;
@@ -99,9 +99,9 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		}
 		this.random.advance(2620);
 		if(version.isOlderThan(MCVersion.v1_15)) {
-			this.noiseSampler = new OctavePerlinNoiseSampler(this.random, 16);
+			this.depthNoise = new OctavePerlinNoiseSampler(this.random, 16);
 		} else {
-			this.noiseSampler = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
+			this.depthNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
 		}
 		this.densityFactor = densityFactor;
 		this.densityOffset = densityOffset;
@@ -293,8 +293,8 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		float weightedScale = 0.0F;
 		float weightedDepth = 0.0F;
 		float totalWeight = 0.0F;
-		Biome biome= this.biomeSource.getBiomeForNoiseGen(x, this.getSeaLevel(), z);
-		float depthAtCenter =biome.getDepth();
+		Biome biome = this.biomeSource.getBiomeForNoiseGen(x, this.getSeaLevel(), z);
+		float depthAtCenter = biome.getDepth();
 		for(int rx = -sampleRange; rx <= sampleRange; ++rx) {
 			for(int rz = -sampleRange; rz <= sampleRange; ++rz) {
 				biome = this.biomeSource.getBiomeForNoiseGen(x + rx, this.getSeaLevel(), z + rz);
@@ -324,14 +324,22 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			depthAndScale[0] = weightedDepth * 17.0D / 64.0D;
 			depthAndScale[1] = 96.0D / weightedScale;
 		} else {
-			depthAndScale[0] = (double)weightedDepth + this.sampleNoise(x, z);
+			double noise = this.sampleNoise(x, z);
+			depthAndScale[0] = (double)weightedDepth + noise;
+			if(version.isOlderOrEqualTo(MCVersion.v1_13_2)) {
+				double depth = weightedDepth;
+				depth = depth + noise * 0.2D;
+				depth = depth * 8.5D / 8.0D;
+				depth = 8.5D + depth * 4.0D;
+				depthAndScale[0] = depth;
+			}
 			depthAndScale[1] = weightedScale;
 		}
 		return depthAndScale;
 	}
 
 	private double sampleNoise(int x, int z) {
-		double noise = this.noiseSampler.sample(x * 200, 10.0D, z * 200, 1.0D, 0.0D, true);
+		double noise = this.depthNoise.sample(x * 200, 10.0D, z * 200, 1.0D, 0.0D, true);
 		if(version.isOlderThan(MCVersion.v1_16)) {
 			if(version.isNewerOrEqualTo(MCVersion.v1_15)) {
 				noise *= 65535.0D;
@@ -351,6 +359,24 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		}
 
 		noise = noise * 3.0D - 2.0D;
+		if(version.isOlderOrEqualTo(MCVersion.v1_13_2)) {
+			if(noise < 0.0D) {
+				noise = noise / 2.0D;
+				if(noise < -1.0D) {
+					noise = -1.0D;
+				}
+
+				noise = noise / 1.4D;
+				noise = noise / 2.0D;
+			} else {
+				if(noise > 1.0D) {
+					noise = 1.0D;
+				}
+				noise = noise / 8.0D;
+			}
+			return noise;
+		}
+
 		if(noise < 0.0D) {
 			return noise / 28.0D;
 		}
