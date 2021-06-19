@@ -172,9 +172,17 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		double noise = 0.0D;
 		double persistence = 1.0D;
 		for(int octave = 0; octave < octaveCount; ++octave) {
-			double X = (double)x * persistence * noiseScaleX;
-			double Y = (double)y * persistence * noiseScaleY;
-			double Z = (double)z * persistence * noiseScaleZ;
+			int cx=x>>4;
+			int cy=y>>4;
+			int cz=z>>4;
+
+			int fx=x&15;
+			int fy=y&15;
+			int fz=z&15;
+
+			double X = (double)(cx<<4) * persistence * noiseScaleX;
+			double Y = (double)(cy<<4) * persistence * noiseScaleY;
+			double Z = (double)(cz<<4) * persistence * noiseScaleZ;
 			long intX = MathHelper.lfloor(X);
 			long intZ = MathHelper.lfloor(Z);
 			X = X - (double)intX;
@@ -183,7 +191,12 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			intZ = intZ % 16777216L;
 			X = X + (double)intX;
 			Z = Z + (double)intZ;
-			noise+=sampler.getOctave(octave).sample(X*noiseScaleX*persistence,Y*noiseScaleX*persistence,Z*noiseScaleX*persistence,0.0D,0.0D)/persistence;
+			noise+=sampler.getOctave(octave).sample(
+				X+fx*noiseScaleX*persistence,
+				Y+fy*noiseScaleY,
+				Z+fz*noiseScaleZ,
+				0.0D,0.0D
+			)/persistence;
 			persistence /= 2.0D;
 		}
 		return noise;
