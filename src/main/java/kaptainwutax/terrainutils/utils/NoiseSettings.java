@@ -4,6 +4,8 @@ public class NoiseSettings {
 	public NoiseSamplingSettings samplingSettings;
 	public NoiseSlideSettings topSlideSettings;
 	public NoiseSlideSettings bottomSlideSettings;
+	public final static double coordinateScale = 684.412;
+	public final static double heightScale = 684.412;
 
 	public NoiseSettings(NoiseSamplingSettings samplingSettings, NoiseSlideSettings topSlideSettings, NoiseSlideSettings bottomSlideSettings) {
 		this.samplingSettings = samplingSettings;

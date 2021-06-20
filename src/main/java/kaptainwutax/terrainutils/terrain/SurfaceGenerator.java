@@ -6,9 +6,11 @@ import kaptainwutax.mcutils.block.Block;
 import kaptainwutax.mcutils.block.Blocks;
 import kaptainwutax.mcutils.rand.ChunkRand;
 import kaptainwutax.mcutils.state.Dimension;
+import kaptainwutax.mcutils.util.data.Triplet;
 import kaptainwutax.mcutils.version.MCVersion;
 import kaptainwutax.noiseutils.noise.NoiseSampler;
 import kaptainwutax.noiseutils.perlin.OctavePerlinNoiseSampler;
+import kaptainwutax.noiseutils.perlin.PerlinNoiseSampler;
 import kaptainwutax.noiseutils.simplex.OctaveSimplexNoiseSampler;
 import kaptainwutax.noiseutils.utils.MathHelper;
 import kaptainwutax.terrainutils.TerrainGenerator;
@@ -136,8 +138,8 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	}
 
 	private double sampleNoise(int x, int y, int z) {
-		double xzScale = 684.412 * noiseSettings.samplingSettings.xzScale;
-		double yScale = 684.412 * noiseSettings.samplingSettings.yScale;
+		double xzScale = NoiseSettings.coordinateScale * noiseSettings.samplingSettings.xzScale;
+		double yScale = NoiseSettings.heightScale * noiseSettings.samplingSettings.yScale;
 		double xzStep = xzScale / noiseSettings.samplingSettings.xzFactor;
 		double yStep = yScale / noiseSettings.samplingSettings.yFactor;
 
@@ -167,22 +169,29 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		return clampedLerp(minNoise / 512.0D, maxNoise / 512.0D, (mainNoise / 10.0D + 1.0D) / 2.0D);
 	}
 
-	private double sampleNoise(OctavePerlinNoiseSampler sampler,int x,int y,int z, double noiseScaleX, double noiseScaleY, double noiseScaleZ,int octaveCount){
+	/**
+	 * This function is super particular as there is a bug where localY was not taken into account in the yloop
+	 *
+	 * @return a double array of Ysize
+	 */
+	private static double[] sampleNoiseOnYLevel(OctavePerlinNoiseSampler sampler, int ySize, int x, int z, double noiseScaleX, double noiseScaleY, double noiseScaleZ) {
 		// replace octave count with the one in noiseutils
-		double noise = 0.0D;
+		double[] yArray = new double[ySize];
 		double persistence = 1.0D;
-		for(int octave = 0; octave < octaveCount; ++octave) {
-			int cx=x>>4;
-			int cy=y>>4;
-			int cz=z>>4;
+		for(int octave = 0; octave < sampler.getCount(); ++octave) {
 
-			int fx=x&15;
-			int fy=y&15;
-			int fz=z&15;
+			double xScale = noiseScaleX * persistence;
+			double yScale = noiseScaleY * persistence;
+			double zScale = noiseScaleZ * persistence;
 
-			double X = (double)(cx<<4) * persistence * noiseScaleX;
-			double Y = (double)(cy<<4) * persistence * noiseScaleY;
-			double Z = (double)(cz<<4) * persistence * noiseScaleZ;
+			int cx = x >> 4;
+			int cz = z >> 4;
+
+			int fx = x & 15;
+			int fz = z & 15;
+
+			double X = (double)(cx << 4) * xScale;
+			double Z = (double)(cz << 4) * zScale;
 			long intX = MathHelper.lfloor(X);
 			long intZ = MathHelper.lfloor(Z);
 			X = X - (double)intX;
@@ -191,40 +200,108 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			intZ = intZ % 16777216L;
 			X = X + (double)intX;
 			Z = Z + (double)intZ;
-			noise+=sampler.getOctave(octave).sample(
-				X+fx*noiseScaleX*persistence,
-				Y+fy*noiseScaleY,
-				Z+fz*noiseScaleZ,
-				0.0D,0.0D
-			)/persistence;
+			PerlinNoiseSampler noiseSampler = sampler.getOctave(octave);
+			int oldOffset = -1;
+			double x1x2 = 0.0D;
+			double x3x4 = 0.0D;
+			double x5x6 = 0.0D;
+			double x7x8 = 0.0D;
+			for(int currentY = 0; currentY < ySize; currentY++) {
+
+				double fy = currentY * yScale;
+				// the & is not necessary until you mess up with heights
+				int currentOffset = (int)(noiseSampler.originY + fy) & 255;
+
+				Triplet<int[], double[], double[]> args = noiseSampler.getArgs(
+					X + fx * xScale,
+					fy,
+					Z + fz * zScale,
+					0.0D, 0.0D
+				);
+				// this part is crucial because without it then you have wrong values because the
+				// intern at Mojang forgot that sameOffset doesn't means same fy (or localY) in particular with double
+				// this can make a huge difference, this pseudo-optimization makes it hard to do single y values thus we
+				// have to precompute the full y range since precomputed values of previous y value could trickle down
+				// we could make it pseudo recursive by calling it with y-1 but that seems a bit overboard.
+				if(currentY == 0 || currentOffset != oldOffset) {
+					oldOffset = currentOffset;
+					double[] perms = noiseSampler.samplePermutations(args.getFirst(), args.getSecond());
+					double fadeLocalX = args.getThird()[0];
+					x1x2 = MathHelper.lerp(fadeLocalX, perms[0], perms[1]);
+					x3x4 = MathHelper.lerp(fadeLocalX, perms[2], perms[3]);
+					x5x6 = MathHelper.lerp(fadeLocalX, perms[4], perms[5]);
+					x7x8 = MathHelper.lerp(fadeLocalX, perms[6], perms[7]);
+				}
+				double fadeLocalY = args.getThird()[1];
+				double fadeLocalZ = args.getThird()[2];
+				double noise = MathHelper.lerp2(fadeLocalY, fadeLocalZ, x1x2, x3x4, x5x6, x7x8);
+				yArray[currentY] += noise / persistence;
+			}
 			persistence /= 2.0D;
 		}
-		return noise;
+		return yArray;
+	}
+
+	public static void main(String[] args) {
+		long seed = 1232903292041L;
+		ChunkRand random = new ChunkRand(seed);
+		OctavePerlinNoiseSampler minLimitPerlinNoise = new OctavePerlinNoiseSampler(random, 16);
+		int x = 9600;
+		int z = -9600;
+		double[] minNoiseYLevels = sampleNoiseOnYLevel(minLimitPerlinNoise, 33, x, z, (float)NoiseSettings.coordinateScale, (float)NoiseSettings.heightScale, (float)NoiseSettings.coordinateScale);
+
+		System.out.println("");
+	}
+
+
+	protected void sampleNoiseColumnOld(double[] buffer, int x, int z, double depth, double scale) {
+		double[] minNoiseYLevels = sampleNoiseOnYLevel(this.minLimitPerlinNoise, this.noiseSizeY(), x, z,
+			(float)NoiseSettings.coordinateScale,
+			(float)NoiseSettings.heightScale,
+			(float)NoiseSettings.coordinateScale
+		);
+		double[] maxNoiseYLevels = sampleNoiseOnYLevel(this.maxLimitPerlinNoise, this.noiseSizeY(), x, z,
+			(float)NoiseSettings.coordinateScale,
+			(float)NoiseSettings.heightScale,
+			(float)NoiseSettings.coordinateScale
+		);
+		// warning it is very important to do the division first in the float context before passing it as double (casting)
+		double[] mainNoiseYLevels = sampleNoiseOnYLevel(this.mainPerlinNoise, this.noiseSizeY(), x, z,
+			((float)NoiseSettings.coordinateScale) / ((float)noiseSettings.samplingSettings.xzFactor),
+			((float)NoiseSettings.heightScale) / ((float)noiseSettings.samplingSettings.yFactor),
+			((float)NoiseSettings.coordinateScale) / ((float)noiseSettings.samplingSettings.xzFactor)
+		);
+		for(int y = 0; y < this.noiseSizeY(); ++y) {
+			// find how to merge this with sampleNoise logic
+			double fallOff = computeNoiseFalloff(depth, scale, y);
+			double minNoise = minNoiseYLevels[y] / 512.0D;
+			double maxNoise = maxNoiseYLevels[y] / 512.0D;
+			double mainNoise = mainNoiseYLevels[y];
+			mainNoise = (mainNoise / 10.0D + 1.0D) / 2.0D;
+			double noise = clampedLerp(minNoise, maxNoise, mainNoise) - fallOff;
+			if(y > 29) {
+				double offset = (float)(y - 29) / 3.0F;
+				noise = noise * (1.0D - offset) - 10.0D * offset;
+			}
+			buffer[y] = noise;
+		}
 	}
 
 	protected void sampleNoiseColumn(double[] buffer, int x, int z) {
 		double[] ds = this.getDepthAndScale(x, z);
 		double depth = ds[0];
 		double scale = ds[1];
+
+		if(version.isOlderOrEqualTo(MCVersion.v1_13_2)) {
+			this.sampleNoiseColumnOld(buffer, x, z, depth, scale);
+			return;
+		}
+
 		double sizeY = this.getMaxNoiseY();
 		double minY = this.getMinNoiseY();
 		double randomOffset = this.biomeSource.getDimension() == Dimension.OVERWORLD ? this.sampleNoise(x, z) : 0.0D;
 		for(int y = 0; y < this.noiseSizeY(); ++y) {
-			if (version.isOlderOrEqualTo(MCVersion.v1_13_2)){
-				// find how to merge this with sampleNoise logic
-				double fallOff=computeNoiseFalloff(depth,scale,y);
-				double minNoise=this.sampleNoise(this.minLimitPerlinNoise,x,y,z,684.412F,684.412F,684.412F,16)/512.0D;
-				double maxNoise=this.sampleNoise(this.maxLimitPerlinNoise,x,y,z,684.412F,684.412F,684.412F,16)/512.0D;
-				double mainNoise=this.sampleNoise(this.mainPerlinNoise,x,y,z,684.412F/80.0f,684.412F/160.0f,684.412F/80.0f,8);
-				mainNoise=(mainNoise/10.0D+1.0D)/2.0D;
-				double noise= kaptainwutax.terrainutils.utils.MathHelper.clampedLerp(minNoise,maxNoise,mainNoise)-fallOff;
-				if (y>29){
-					double offset=(float)(y-29)/3.0F;
-					noise=noise*(1.0D-offset)-10.0D*offset;
-				}
-				buffer[y] = noise;
-				continue;
-			}
+
 			// everything below is only for 1.14+
 			double noise = this.sampleNoise(x, y, z);
 			if(version.isNewerOrEqualTo(MCVersion.v1_16)) {

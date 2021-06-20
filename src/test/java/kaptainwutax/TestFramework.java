@@ -87,6 +87,7 @@ public class TestFramework {
 				int y = cg.getHeightOnGround(x, z);
 				if(DEBUG) System.out.println(x + " " + z);
 				hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;
+				System.out.println(hash+" "+y+" "+x+" "+z);
 			}
 		}
 		assertEquals(matchHash, hash, "Hash are not identical, something is wrong");
@@ -96,7 +97,7 @@ public class TestFramework {
 		BiomeSource bs = BiomeSource.of(dimension, version, seed);
 		TerrainGenerator cg = TerrainGenerator.of(dimension, bs);
 		assert cg != null;
-		assertEquals(cg.getHeightOnGround(x, z), expectedY);
+		assertEquals(expectedY,cg.getHeightOnGround(x, z));
 	}
 
 	@Target({ElementType.TYPE, ElementType.METHOD})

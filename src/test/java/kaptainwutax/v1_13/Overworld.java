@@ -88,7 +88,7 @@ public class Overworld {
 	@Test
 	@DisplayName("Test Height version 1.13 map size 128")
 	public void size128() {
-		randomHashGen(VERSION, 1232903292041L, DIMENSION, 128, 21382138983289132L, 2497443544475995326L);
+		randomHashGen(VERSION, 1232903292041L, DIMENSION, 128, 21382138983289132L, 1018152795219244607L);
 	}
 
 
