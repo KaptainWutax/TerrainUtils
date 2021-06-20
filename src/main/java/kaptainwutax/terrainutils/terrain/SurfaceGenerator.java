@@ -255,6 +255,7 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 
 
 	protected void sampleNoiseColumnOld(double[] buffer, int x, int z, double depth, double scale) {
+		// warning it is very important to do the float casting, this is a bug with old versions with precision
 		double[] minNoiseYLevels = sampleNoiseOnYLevel(this.minLimitPerlinNoise, this.noiseSizeY(), x, z,
 			(float)NoiseSettings.coordinateScale,
 			(float)NoiseSettings.heightScale,
@@ -265,14 +266,12 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			(float)NoiseSettings.heightScale,
 			(float)NoiseSettings.coordinateScale
 		);
-		// warning it is very important to do the division first in the float context before passing it as double (casting)
 		double[] mainNoiseYLevels = sampleNoiseOnYLevel(this.mainPerlinNoise, this.noiseSizeY(), x, z,
 			((float)NoiseSettings.coordinateScale) / ((float)noiseSettings.samplingSettings.xzFactor),
 			((float)NoiseSettings.heightScale) / ((float)noiseSettings.samplingSettings.yFactor),
 			((float)NoiseSettings.coordinateScale) / ((float)noiseSettings.samplingSettings.xzFactor)
 		);
 		for(int y = 0; y < this.noiseSizeY(); ++y) {
-			// find how to merge this with sampleNoise logic
 			double fallOff = computeNoiseFalloff(depth, scale, y);
 			double minNoise = minNoiseYLevels[y] / 512.0D;
 			double maxNoise = maxNoiseYLevels[y] / 512.0D;
@@ -455,11 +454,6 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			double noise = this.sampleNoise(x, z);
 			depthAndScale[0] = (double)weightedDepth + noise;
 			if(version.isOlderOrEqualTo(MCVersion.v1_13_2)) {
-
-				// double depth = weightedDepth;
-				//		depth = depth + noise * 0.2D;
-				//		depth = depth * this.settings.spread() / 8.0D;
-				//		depth = this.settings.spread() + depth * 4.0D;
 				depthAndScale[0] = weightedDepth + noise * 0.2D;
 			}
 			depthAndScale[1] = weightedScale;
