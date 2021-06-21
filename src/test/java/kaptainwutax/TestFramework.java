@@ -85,9 +85,8 @@ public class TestFramework {
 				int x = r.nextInt(512000) - 25600;
 				int z = r.nextInt(512000) - 25600;
 				int y = cg.getHeightOnGround(x, z);
-				if(DEBUG) System.out.println(x + " " + z);
 				hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;
-				System.out.println(hash+" "+y+" "+x+" "+z);
+				if (DEBUG)System.out.println(hash+" "+y+" "+x+" "+z);
 			}
 		}
 		assertEquals(matchHash, hash, "Hash are not identical, something is wrong");
