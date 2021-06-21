@@ -13,6 +13,7 @@ import kaptainwutax.noiseutils.perlin.OctavePerlinNoiseSampler;
 import kaptainwutax.noiseutils.perlin.PerlinNoiseSampler;
 import kaptainwutax.noiseutils.simplex.OctaveSimplexNoiseSampler;
 import kaptainwutax.noiseutils.utils.MathHelper;
+import kaptainwutax.seedutils.lcg.LCG;
 import kaptainwutax.terrainutils.TerrainGenerator;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
@@ -57,6 +58,8 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	private final Map<Long, Block[]> columnCache = new HashMap<>();
 	private final int worldHeight;
 
+	private static final LCG SCALE_ADVANCE= LCG.JAVA.combine(2620);
+
 	public SurfaceGenerator(BiomeSource biomeSource,
 							int worldHeight,
 							int horizontalNoiseResolution,
@@ -99,7 +102,13 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			}
 
 		}
-		this.random.advance(2620);
+		if (version.isOlderOrEqualTo(MCVersion.v1_13_2)){
+			// this is important as nextInt can skip...
+			OctavePerlinNoiseSampler scaleNoise=new OctavePerlinNoiseSampler(this.random,10);
+		}else{
+			this.random.advance(SCALE_ADVANCE);
+		}
+
 		if(version.isOlderThan(MCVersion.v1_15)) {
 			this.depthNoise = new OctavePerlinNoiseSampler(this.random, 16);
 		} else {
