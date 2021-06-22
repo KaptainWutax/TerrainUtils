@@ -89,65 +89,63 @@ public class Overworld {
 		randomHashGen(VERSION, 213232132139149124L, DIMENSION, 128, 21382138983289132L, 7969545620266398398L);
 	}
 
-
-	public static void getProgram() {
-		System.out.println(" public static HashMap<Integer, ChunkPrimer> hashMap = new HashMap<>();\n" +
-			"\n" +
-			"    public static int processChunk(int x, int z, IChunkGenerator chunkGenerator,IBlockState blockState) {\n" +
-			"        int cx = x >> 4;\n" +
-			"        int cz = z >> 4;\n" +
-			"        ChunkPrimer chunk = hashMap.computeIfAbsent(((cx & 0xffff) << 16) | (cz & 0xffff), e -> {\n" +
-			"            ChunkPrimer chunkPrimer=new ChunkPrimer();\n" +
-			"            chunkGenerator.setBlocksInChunk(cx, cz, chunkPrimer);\n" +
-			"            return chunkPrimer;\n" +
-			"        });\n" +
-			"        return chunk.findGroundBlockIdx(x&0xf,z&0xf,block-> block==blockState);\n" +
-			"    }\n" +
-			"\n" +
-			"    public static void main(String[] args)\n" +
-			"    {\n" +
-			"        Bootstrap.register();\n" +
-			"        long seed=213232132139149124L;\n" +
-			"        World world = new WorldClient(null,\n" +
-			"                new WorldSettings(seed, GameType.NOT_SET, true, false, WorldType.DEFAULT),\n" +
-			"                DimensionType.OVERWORLD.getId(), EnumDifficulty.EASY, null);\n" +
-			"        ChunkGeneratorOverworld chunkGeneratorOverworld=new ChunkGeneratorOverworld(world,seed,true,\"\");\n" +
-			"\n" +
-			"\n" +
-			"        world = new WorldClient(null,\n" +
-			"                new WorldSettings(seed, GameType.NOT_SET, true, false, WorldType.DEFAULT),\n" +
-			"                DimensionType.NETHER.getId(), EnumDifficulty.EASY, null);\n" +
-			"        ChunkGeneratorHell chunkGeneratorHell=new ChunkGeneratorHell(world,true,seed);\n" +
-			"\n" +
-			"        world = new WorldClient(null,\n" +
-			"                new WorldSettings(seed, GameType.NOT_SET, true, false, WorldType.DEFAULT),\n" +
-			"                DimensionType.THE_END.getId(), EnumDifficulty.EASY, null);\n" +
-			"        ChunkGeneratorEnd chunkGeneratorEnd=new ChunkGeneratorEnd(world,true,seed,new BlockPos(0,0,0));\n" +
-			"\n" +
-			"        IChunkGenerator chunkGenerator=chunkGeneratorOverworld;\n" +
-			"        IBlockState state= Blocks.STONE.getDefaultState();\n" +
-			"\n" +
-			"        int size = 128;\n" +
-			"        Random r = new Random(21382138983289132L);\n" +
-			"        boolean PRINT = false;\n" +
-			"        if (PRINT) System.out.println(\"{\");\n" +
-			"        long hash = 0;\n" +
-			"\n" +
-			"        for (int i = 0; i < size; i++) {\n" +
-			"            for (int j = 0; j < size; j++) {\n" +
-			"                int x = r.nextInt(512000) - 25600;\n" +
-			"                int z = r.nextInt(512000) - 25600;\n" +
-			"                int y = processChunk(x, z, chunkGenerator,state);\n" +
-			"                hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;\n" +
-			"                if (PRINT) System.out.printf(\"%d ,\", y);\n" +
-			"            }\n" +
-			"            if (PRINT) System.out.println();\n" +
-			"        }\n" +
-			"        if (PRINT) System.out.print(\"};\");\n" +
-			"        if (PRINT) System.out.println();\n" +
-			"        if (!PRINT) System.out.println(hash + \"L\");\n" +
-			"\n" +
-			"       // Main.main(concat(new String[] {\"--version\", \"mcp\", \"--accessToken\", \"0\", \"--assetsDir\", \"assets\", \"--assetIndex\", \"1.8\", \"--userProperties\", \"{}\"}, args));\n" +
-			"    }");
-	}
+	//	public static HashMap<Integer, ChunkPrimer> hashMap = new HashMap<>();
+	//
+	//    public static int processChunk(int x, int z, IChunkGenerator chunkGenerator,IBlockState blockState) {
+	//        int cx = x >> 4;
+	//        int cz = z >> 4;
+	//        ChunkPrimer chunk = hashMap.computeIfAbsent(((cx & 0xffff) << 16) | (cz & 0xffff), e -> {
+	//            ChunkPrimer chunkPrimer=new ChunkPrimer();
+	//            chunkGenerator.setBlocksInChunk(cx, cz, chunkPrimer);
+	//            return chunkPrimer;
+	//        });
+	//        return chunk.findGroundBlockIdx(x&0xf,z&0xf,block-> block==blockState);
+	//    }
+	//
+	//    public static void main(String[] args)
+	//    {
+	//        Bootstrap.register();
+	//        long seed=213232132139149124L;
+	//        World world = new WorldClient(null,
+	//                new WorldSettings(seed, GameType.NOT_SET, true, false, WorldType.DEFAULT),
+	//                DimensionType.OVERWORLD.getId(), EnumDifficulty.EASY, null);
+	//        ChunkGeneratorOverworld chunkGeneratorOverworld=new ChunkGeneratorOverworld(world,seed,true,"");
+	//
+	//
+	//        world = new WorldClient(null,
+	//                new WorldSettings(seed, GameType.NOT_SET, true, false, WorldType.DEFAULT),
+	//                DimensionType.NETHER.getId(), EnumDifficulty.EASY, null);
+	//        ChunkGeneratorHell chunkGeneratorHell=new ChunkGeneratorHell(world,true,seed);
+	//
+	//        world = new WorldClient(null,
+	//                new WorldSettings(seed, GameType.NOT_SET, true, false, WorldType.DEFAULT),
+	//                DimensionType.THE_END.getId(), EnumDifficulty.EASY, null);
+	//        ChunkGeneratorEnd chunkGeneratorEnd=new ChunkGeneratorEnd(world,true,seed,new BlockPos(0,0,0));
+	//
+	//        IChunkGenerator chunkGenerator=chunkGeneratorOverworld;
+	//        IBlockState state= Blocks.STONE.getDefaultState();
+	//
+	//        int size = 128;
+	//        Random r = new Random(21382138983289132L);
+	//        boolean PRINT = false;
+	//        if (PRINT) System.out.println("{");
+	//        long hash = 0;
+	//
+	//        for (int i = 0; i < size; i++) {
+	//            for (int j = 0; j < size; j++) {
+	//                int x = r.nextInt(512000) - 25600;
+	//                int z = r.nextInt(512000) - 25600;
+	//                int y = processChunk(x, z, chunkGenerator,state);
+	//                hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;
+	//                if (PRINT) System.out.printf("%d ,", y);
+	//                System.out.println(hash+" "+y+" "+x+" "+z);
+	//            }
+	//            if (PRINT) System.out.println();
+	//        }
+	//        if (PRINT) System.out.print("};");
+	//        if (PRINT) System.out.println();
+	//        if (!PRINT) System.out.println(hash + "L");
+	//
+	//       // Main.main(concat(new String[] {"--version", "mcp", "--accessToken", "0", "--assetsDir", "assets", "--assetIndex", "1.8", "--userProperties", "{}"}, args));
+	//    }
 }
