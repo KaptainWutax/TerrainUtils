@@ -91,43 +91,40 @@ public class Overworld {
 	}
 
 
-	public static void getProgram() {
-		System.out.println("Bootstrap.register();\n" +
-			"        long seed = 213232132139149124L;\n" +
-			"        World world=new ClientWorld(null,\n" +
-			"                new WorldSettings(\n" +
-			"//                        WorldInfo.byHashing(seed),\n" +
-			"                        seed,\n" +
-			"                        GameType.NOT_SET,\n" +
-			"                        false,\n" +
-			"                        false,\n" +
-			"                        WorldType.DEFAULT),\n" +
-			"                DimensionType.OVERWORLD,\n" +
-			"                0,\n" +
-			"                null,\n" +
-			"                null);\n" +
-			"        OverworldBiomeProviderSettings OWSettings = BiomeProviderType.VANILLA_LAYERED\n" +
-			"                .createSettings(world.getWorldInfo())\n" +
-			"                .setGeneratorSettings(new OverworldGenSettings());\n" +
-			"        OverworldChunkGenerator overworldChunkGenerator=new OverworldChunkGenerator(world,BiomeProviderType.VANILLA_LAYERED.create(OWSettings),new OverworldGenSettings());\n" +
-			"        int size = 128;\n" +
-			"        Random r = new Random(21382138983289132L);\n" +
-			"        boolean PRINT = false;\n" +
-			"        if (PRINT) System.out.println(\"{\");\n" +
-			"        long hash = 0;\n" +
-			"        for (int i = 0; i < size; i++) {\n" +
-			"            for (int j = 0; j < size; j++) {\n" +
-			"                int x = r.nextInt(512000)-25600;\n" +
-			"                int z = r.nextInt(512000)-25600;\n" +
-			"                int y = overworldChunkGenerator.getHeightOnGround(x, z, Heightmap.Type.OCEAN_FLOOR_WG);\n" +
-			"                hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;\n" +
-			"                if (PRINT) System.out.printf(\"%d ,\", y);\n" +
-			"\n" +
-			"            }\n" +
-			"            if (PRINT) System.out.println();\n" +
-			"        }\n" +
-			"        if (PRINT) System.out.print(\"};\");\n" +
-			"        if (PRINT) System.out.println();\n" +
-			"        if (!PRINT) System.out.println(hash+\"L\");");
-	}
+	//		  Bootstrap.register();
+	//        long seed = 213232132139149124L;
+	//        World world=new ClientWorld(null,
+	//                new WorldSettings(
+	//                        seed,
+	//                        GameType.NOT_SET,
+	//                        false,
+	//                        false,
+	//                        WorldType.DEFAULT),
+	//                DimensionType.OVERWORLD,
+	//                0,
+	//                null,
+	//                null);
+	//        OverworldBiomeProviderSettings OWSettings = BiomeProviderType.VANILLA_LAYERED
+	//                .createSettings(world.getWorldInfo())
+	//                .setGeneratorSettings(new OverworldGenSettings());
+	//        OverworldChunkGenerator overworldChunkGenerator=new OverworldChunkGenerator(world,BiomeProviderType.VANILLA_LAYERED.create(OWSettings),new OverworldGenSettings());
+	//        int size = 128;
+	//        Random r = new Random(21382138983289132L);
+	//        boolean PRINT = false;
+	//        if (PRINT) System.out.println("{");
+	//        long hash = 0;
+	//        for (int i = 0; i < size; i++) {
+	//            for (int j = 0; j < size; j++) {
+	//                int x = r.nextInt(512000)-25600;
+	//                int z = r.nextInt(512000)-25600;
+	//                int y = overworldChunkGenerator.getHeightOnGround(x, z, Heightmap.Type.OCEAN_FLOOR_WG);
+	//                hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;
+	//                if (PRINT) System.out.printf("%d ,", y);
+	//
+	//            }
+	//            if (PRINT) System.out.println();
+	//        }
+	//        if (PRINT) System.out.print("};");
+	//        if (PRINT) System.out.println();
+	//        if (!PRINT) System.out.println(hash+"L");
 }

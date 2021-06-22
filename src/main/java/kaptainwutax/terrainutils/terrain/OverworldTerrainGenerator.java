@@ -13,7 +13,8 @@ public class OverworldTerrainGenerator extends SurfaceGenerator {
 			NoiseSettings.create(0.9999999814507745, 0.9999999814507745, 80.0, 160.0)
 				.addTopSlide(-10, 3, 0)
 				.addBottomSlide(-30, 0, 0),
-			1.0D, -0.46875D, true);
+			1.0D, -0.46875D, true
+			);
 	}
 
 	@Override

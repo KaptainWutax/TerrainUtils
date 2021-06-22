@@ -17,10 +17,12 @@ public class EndTerrainGenerator extends SurfaceGenerator {
 				NoiseSettings.create(2.0, 1.0, 80.0, 160.0)
 					.addTopSlide(-3000, 64, -46)
 					.addBottomSlide(-30, 7, 1) :
-				NoiseSettings.create(2.0, 1.0, 80.0, 160.0)
+				NoiseSettings.create(2.0, 1.0, 80.0,160.0 )
 					.addTopSlide(-3000, 64, 0)
-					.addBottomSlide(-30, 1, 0),
-			0.0, 0.0, true);
+					.addBottomSlide(-30, 1, 0)
+			,
+			0.0, 0.0, true
+		);
 	}
 
 	@Override

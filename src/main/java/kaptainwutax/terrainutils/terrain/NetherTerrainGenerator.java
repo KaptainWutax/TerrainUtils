@@ -5,6 +5,7 @@ import kaptainwutax.mcutils.block.Block;
 import kaptainwutax.mcutils.block.Blocks;
 import kaptainwutax.mcutils.state.Dimension;
 import kaptainwutax.mcutils.version.MCVersion;
+import kaptainwutax.terrainutils.TerrainGenerator;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 public class NetherTerrainGenerator extends SurfaceGenerator {
@@ -16,13 +17,16 @@ public class NetherTerrainGenerator extends SurfaceGenerator {
 			(biomeSource.getVersion().isNewerOrEqualTo(MCVersion.v1_16)) ?
 				NoiseSettings.create(1.0, 3.0, 80.0, 60.0)
 					.addTopSlide(120, 3, 0)
-					.addBottomSlide(320, 4, -1)
-				: NoiseSettings.create(1.0, 3.0, 80.0, 60.0)
+					.addBottomSlide(320, 4, -1) :
+				NoiseSettings.create(1.0, 3.0, 80.0, 60.0)
 				.addTopSlide(-10, 3, 0)
 				.addBottomSlide(-30, 1, 0)
 			,
-			0.0, 0.019921875, false);
+			0.0, 0.019921875, false
+		);
 	}
+
+
 
 	@Override
 	public int getSeaLevel() {

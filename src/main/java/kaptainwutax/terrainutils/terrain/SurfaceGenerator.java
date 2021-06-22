@@ -23,8 +23,7 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import static kaptainwutax.noiseutils.utils.MathHelper.maintainPrecision;
-import static kaptainwutax.terrainutils.utils.MathHelper.clampedLerp;
-import static kaptainwutax.terrainutils.utils.MathHelper.sqrt;
+import static kaptainwutax.terrainutils.utils.MathHelper.*;
 
 public abstract class SurfaceGenerator extends TerrainGenerator {
 
@@ -52,13 +51,15 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	private final OctavePerlinNoiseSampler maxLimitPerlinNoise;
 	private final OctavePerlinNoiseSampler mainPerlinNoise;
 	private final NoiseSampler surfaceDepthNoise;
+	private final OctavePerlinNoiseSampler scaleNoise;
 	private final double densityFactor;
 	private final double densityOffset;
 	private final Map<Long, double[]> noiseColumnCache = new HashMap<>();
 	private final Map<Long, Block[]> columnCache = new HashMap<>();
 	private final int worldHeight;
 
-	private static final LCG SCALE_ADVANCE= LCG.JAVA.combine(2620);
+	private static final LCG SCALE_ADVANCE = LCG.JAVA.combine(2620);
+	private static final LCG SURFACE_ADVANCE = LCG.JAVA.combine(1048);
 
 	public SurfaceGenerator(BiomeSource biomeSource,
 							int worldHeight,
@@ -76,6 +77,9 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		this.noiseSizeX = 16 / this.chunkWidth;
 		this.noiseSizeY = worldHeight / this.chunkHeight;
 		this.noiseSizeZ = 16 / this.chunkWidth;
+		this.densityFactor = densityFactor;
+		this.densityOffset = densityOffset;
+
 		this.random = new ChunkRand(biomeSource.getWorldSeed());
 		if(version.isOlderThan(MCVersion.v1_15)) {
 			// those lines can be simplified to setting the lacunarity correctly to the lowest (FIXME)
@@ -88,24 +92,28 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			this.mainPerlinNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-7, 0));
 		}
 
-		if(useSimplexNoise) {
-			if(version.isOlderThan(MCVersion.v1_15)) {
-				this.surfaceDepthNoise = new OctaveSimplexNoiseSampler(this.random, 4);
-			} else {
-				this.surfaceDepthNoise = new OctaveSimplexNoiseSampler(this.random, IntStream.rangeClosed(-3, 0));
-			}
+		if(version.isOlderOrEqualTo(MCVersion.v1_13_2) && getDimension() == Dimension.END) {
+			this.surfaceDepthNoise = null;
 		} else {
-			if(version.isOlderThan(MCVersion.v1_15)) {
-				this.surfaceDepthNoise = new OctavePerlinNoiseSampler(this.random, 4);
-			} else {
-				this.surfaceDepthNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-3, 0));
+			if(version.isOlderOrEqualTo(MCVersion.v1_13_2) && getDimension() == Dimension.NETHER) {
+				this.random.advance(SURFACE_ADVANCE);
 			}
 
+			if(version.isOlderThan(MCVersion.v1_15)) {
+				this.surfaceDepthNoise = useSimplexNoise ? new OctaveSimplexNoiseSampler(this.random, 4) :
+					new OctavePerlinNoiseSampler(this.random, 4);
+			} else {
+				this.surfaceDepthNoise = useSimplexNoise ? new OctaveSimplexNoiseSampler(this.random, IntStream.rangeClosed(-3, 0)) :
+					new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-3, 0));
+			}
 		}
-		if (version.isOlderOrEqualTo(MCVersion.v1_13_2)){
+
+
+		if(version.isOlderOrEqualTo(MCVersion.v1_13_2)) {
 			// this is important as nextInt can skip...
-			OctavePerlinNoiseSampler scaleNoise=new OctavePerlinNoiseSampler(this.random,10);
-		}else{
+			scaleNoise = new OctavePerlinNoiseSampler(this.random, 10);
+		} else {
+			scaleNoise = null;
 			this.random.advance(SCALE_ADVANCE);
 		}
 
@@ -114,8 +122,9 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		} else {
 			this.depthNoise = new OctavePerlinNoiseSampler(this.random, IntStream.rangeClosed(-15, 0));
 		}
-		this.densityFactor = densityFactor;
-		this.densityOffset = densityOffset;
+
+		// this.EndNoise=new OctavePerlinNoiseSampler(new ChunkRand(biomeSource.getWorldSeed()), 4);
+
 	}
 
 	public int getMinWorldHeight() {
@@ -147,8 +156,8 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	}
 
 	private double sampleNoise(int x, int y, int z) {
-		double xzScale = NoiseSettings.coordinateScale * noiseSettings.samplingSettings.xzScale;
-		double yScale = NoiseSettings.heightScale * noiseSettings.samplingSettings.yScale;
+		double xzScale = NoiseSettings.COORDINATE_SCALE * noiseSettings.samplingSettings.xzScale;
+		double yScale = NoiseSettings.HEIGHT_SCALE * noiseSettings.samplingSettings.yScale;
 		double xzStep = xzScale / noiseSettings.samplingSettings.xzFactor;
 		double yStep = yScale / noiseSettings.samplingSettings.yFactor;
 
@@ -175,7 +184,7 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			persistence /= 2.0D;
 		}
 
-		return clampedLerp(minNoise / 512.0D, maxNoise / 512.0D, (mainNoise / 10.0D + 1.0D) / 2.0D);
+		return clampedLerp(minNoise / NoiseSettings.NOISE_SCALE, maxNoise / NoiseSettings.NOISE_SCALE, (mainNoise / 10.0D + 1.0D) / 2.0D);
 	}
 
 	/**
@@ -251,46 +260,51 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		return yArray;
 	}
 
-	public static void main(String[] args) {
-		long seed = 1232903292041L;
-		ChunkRand random = new ChunkRand(seed);
-		OctavePerlinNoiseSampler minLimitPerlinNoise = new OctavePerlinNoiseSampler(random, 16);
-		int x = 9600;
-		int z = -9600;
-		double[] minNoiseYLevels = sampleNoiseOnYLevel(minLimitPerlinNoise, 33, x, z, (float)NoiseSettings.coordinateScale, (float)NoiseSettings.heightScale, (float)NoiseSettings.coordinateScale);
-
-		System.out.println("");
-	}
-
-
 	protected void sampleNoiseColumnOld(double[] buffer, int x, int z, double depth, double scale) {
+
+		double xzScale = NoiseSettings.COORDINATE_SCALE * noiseSettings.samplingSettings.xzScale;
+		double yScale = NoiseSettings.HEIGHT_SCALE * noiseSettings.samplingSettings.yScale;
+		double xzStep = xzScale / noiseSettings.samplingSettings.xzFactor;
+		double yStep = yScale / noiseSettings.samplingSettings.yFactor;
 		// warning it is very important to do the float casting, this is a bug with old versions with precision
-		double[] minNoiseYLevels = sampleNoiseOnYLevel(this.minLimitPerlinNoise, this.noiseSizeY(), x, z,
-			(float)NoiseSettings.coordinateScale,
-			(float)NoiseSettings.heightScale,
-			(float)NoiseSettings.coordinateScale
-		);
-		double[] maxNoiseYLevels = sampleNoiseOnYLevel(this.maxLimitPerlinNoise, this.noiseSizeY(), x, z,
-			(float)NoiseSettings.coordinateScale,
-			(float)NoiseSettings.heightScale,
-			(float)NoiseSettings.coordinateScale
-		);
-		double[] mainNoiseYLevels = sampleNoiseOnYLevel(this.mainPerlinNoise, this.noiseSizeY(), x, z,
-			((float)NoiseSettings.coordinateScale) / ((float)noiseSettings.samplingSettings.xzFactor),
-			((float)NoiseSettings.heightScale) / ((float)noiseSettings.samplingSettings.yFactor),
-			((float)NoiseSettings.coordinateScale) / ((float)noiseSettings.samplingSettings.xzFactor)
-		);
+		if(getDimension() == Dimension.OVERWORLD) {
+			// 684.412F/80.0F=8.55515
+			// 684.412D*0.9999999814507745D/80.0D = 8.555149841308594
+			// (float)8.555149841308594=8.55515
+			xzStep = (float)xzStep;
+			yStep = (float)yStep;
+		}
+		double[] minNoiseYLevels = sampleNoiseOnYLevel(this.minLimitPerlinNoise, this.noiseSizeY(), x, z, xzScale, yScale, xzScale);
+		double[] maxNoiseYLevels = sampleNoiseOnYLevel(this.maxLimitPerlinNoise, this.noiseSizeY(), x, z, xzScale, yScale, xzScale);
+		double[] mainNoiseYLevels = sampleNoiseOnYLevel(this.mainPerlinNoise, this.noiseSizeY(), x, z, xzStep, yStep, xzStep);
+
+		int sizeY = (int)this.getMaxNoiseY();
+
 		for(int y = 0; y < this.noiseSizeY(); ++y) {
 			double fallOff = computeNoiseFalloff(depth, scale, y);
-			double minNoise = minNoiseYLevels[y] / 512.0D;
-			double maxNoise = maxNoiseYLevels[y] / 512.0D;
+			double minNoise = minNoiseYLevels[y] / NoiseSettings.NOISE_SCALE;
+			double maxNoise = maxNoiseYLevels[y] / NoiseSettings.NOISE_SCALE;
 			double mainNoise = mainNoiseYLevels[y];
 			mainNoise = (mainNoise / 10.0D + 1.0D) / 2.0D;
 			double noise = clampedLerp(minNoise, maxNoise, mainNoise) - fallOff;
-			if(y > 29) {
-				double offset = (float)(y - 29) / 3.0F;
-				noise = noise * (1.0D - offset) - 10.0D * offset;
+			if(y > sizeY) {
+				double offset = (float)(y - sizeY) / (float)this.noiseSettings.topSlideSettings.size;
+				if (getDimension()==Dimension.END){
+					offset = clamp(offset, 0.0D, 1.0D);
+				}
+				noise = noise * (1.0D - offset) + this.noiseSettings.topSlideSettings.target * offset;
 			}
+			if ((double)y < getMinNoiseY()){
+				if (getDimension()==Dimension.NETHER){
+					double offset = (getMinNoiseY() - (double)y) / 4.0D;
+					offset = clamp(offset, 0.0D, 1.0D);
+					noise = noise * (1.0D - offset) - 10.0D * offset;
+				}else if (getDimension()==Dimension.END){
+					double offset = (float)((int)getMinNoiseY() - y) / ((float)getMinNoiseY() - 1.0F);
+					noise = noise * (1.0D - offset) - 30.0D * offset;
+				}
+			}
+
 			buffer[y] = noise;
 		}
 	}
@@ -309,7 +323,6 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		double minY = this.getMinNoiseY();
 		double randomOffset = this.biomeSource.getDimension() == Dimension.OVERWORLD ? this.sampleNoise(x, z) : 0.0D;
 		for(int y = 0; y < this.noiseSizeY(); ++y) {
-
 			// everything below is only for 1.14+
 			double noise = this.sampleNoise(x, y, z);
 			if(version.isNewerOrEqualTo(MCVersion.v1_16)) {

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static kaptainwutax.TestFramework.randomChunkColumn;
 import static kaptainwutax.TestFramework.randomHashColumn;
+import static kaptainwutax.TestFramework.testSinglePoint;
 import static kaptainwutax.mcutils.block.Blocks.AIR;
 import static kaptainwutax.mcutils.block.Blocks.LAVA;
 import static kaptainwutax.mcutils.block.Blocks.NETHERRACK;
@@ -96,52 +97,49 @@ public class Nether {
 	@Test
 	@DisplayName("Test Height map version 1.14 size 128")
 	public void size128() {
-		randomHashColumn(VERSION, 23121308232103L,DIMENSION, 128, 21382138983289132L, -608453383L);
+		randomHashColumn(VERSION, 313213232931238124L,DIMENSION, 128, 21382138983289132L, -17788322567L);
 	}
 
-	public static void getProgram() {
-		System.out.println(" Bootstrap.register();\n" +
-			"        long seed = 213232132139149124L;\n" +
-			"        World world=new ClientWorld(null,\n" +
-			"                new WorldSettings(\n" +
-			"//                        WorldInfo.byHashing(seed),\n" +
-			"                        seed,\n" +
-			"                        GameType.NOT_SET,\n" +
-			"                        false,\n" +
-			"                        false,\n" +
-			"                        WorldType.DEFAULT),\n" +
-			"                THE_NETHER,\n" +
-			"                0,\n" +
-			"                null,\n" +
-			"                null);\n" +
-			"        ChunkGenerator<?> netherChunkGen= THE_NETHER.create(world).createChunkGenerator();\n" +
-			"        int size = 8;\n" +
-			"        Random r = new Random(21382138983289132L);\n" +
-			"        boolean PRINT = true;\n" +
-			"        System.out.println(netherChunkGen.getHeightOnGround(202766,1143, Heightmap.Type.WORLD_SURFACE_WG));\n" +
-			"        if (PRINT) System.out.println(\"{\");\n" +
-			"        long hash = 0;\n" +
-			"        for (int i = 0; i < size; i++) {\n" +
-			"            for (int j = 0; j < size; j++) {\n" +
-			"                int x = r.nextInt(512000)-25600;\n" +
-			"                int z = r.nextInt(512000)-25600;\n" +
-			"                BlockState[] buffer=new BlockState[netherChunkGen.getMaxHeight()];\n" +
-			"                netherChunkGen.generateColumn(buffer,x,z, Heightmap.Type.WORLD_SURFACE_WG);\n" +
-			"                if (PRINT) System.out.print(\"{\");\n" +
-			"                int y=0;\n" +
-			"                for (BlockState blockState:buffer){\n" +
-			"                    String block= Registry.BLOCK.getKey(blockState.getBlock()).getPath().toUpperCase();\n" +
-			"                    if (PRINT)System.out.print(block+\",\");\n" +
-			"                    hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | (long) block.hashCode()*y++;\n" +
-			"                }\n" +
-			"                if (PRINT)System.out.print(\"},\");\n" +
-			"                if (PRINT)System.out.println();\n" +
-			"            }\n" +
-			"        }\n" +
-			"        if (PRINT) System.out.print(\"};\");\n" +
-			"        if (PRINT) System.out.println();\n" +
-			"        if (!PRINT) System.out.println(hash+\"L\");");
-	}
+	//	 	  Bootstrap.register();
+	//        long seed = 213232132139149124L;
+	//        World world=new ClientWorld(null,
+	//                new WorldSettings(
+	//                        seed,
+	//                        GameType.NOT_SET,
+	//                        false,
+	//                        false,
+	//                        WorldType.DEFAULT),
+	//                THE_NETHER,
+	//                0,
+	//                null,
+	//                null);
+	//        ChunkGenerator<?> netherChunkGen= THE_NETHER.create(world).createChunkGenerator();
+	//        int size = 8;
+	//        Random r = new Random(21382138983289132L);
+	//        boolean PRINT = true;
+	//        System.out.println(netherChunkGen.getHeightOnGround(202766,1143, Heightmap.Type.WORLD_SURFACE_WG));
+	//        if (PRINT) System.out.println("{");
+	//        long hash = 0;
+	//        for (int i = 0; i < size; i++) {
+	//            for (int j = 0; j < size; j++) {
+	//                int x = r.nextInt(512000)-25600;
+	//                int z = r.nextInt(512000)-25600;
+	//                BlockState[] buffer=new BlockState[netherChunkGen.getMaxHeight()];
+	//                netherChunkGen.getHeightAt(buffer,x,z, Heightmap.Type.WORLD_SURFACE_WG);
+	//                if (PRINT) System.out.print("{");
+	//                int y=0;
+	//                for (BlockState blockState:buffer){
+	//                    String block= Registry.BLOCK.getKey(blockState.getBlock()).getPath().toUpperCase();
+	//                    if (PRINT)System.out.print(block+",");
+	//                    hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | (long) block.hashCode()*y++;
+	//                }
+	//                if (PRINT)System.out.print("},");
+	//                if (PRINT)System.out.println();
+	//            }
+	//        }
+	//        if (PRINT) System.out.print("};");
+	//        if (PRINT) System.out.println();
+	//        if (!PRINT) System.out.println(hash+"L");
 
 	// slight modifications in NoiseChunkGenerator
 	//  public int generateColumn(@Nullable BlockState[] buffer, int x, int z, Heightmap.Type heightmapType) {

@@ -75,7 +75,6 @@ public class Overworld {
 	@Test
 	@DisplayName("Test Height map version 1.13 size 16")
 	public void size16() {
-		testSinglePoint(VERSION, 1232903292041L, DIMENSION,369016,101544,74);
 		randomChunkGen(VERSION, 1232903292041L, DIMENSION, 16, 21382138983289132L, size16);
 	}
 
@@ -92,43 +91,71 @@ public class Overworld {
 	}
 
 
-	public static void getProgram() {
-		System.out.println("Bootstrap.register();\n" +
-			"        long seed = 213232132139149124L;\n" +
-			"        World world=new ClientWorld(null,\n" +
-			"                new WorldSettings(\n" +
-			"//                        WorldInfo.byHashing(seed),\n" +
-			"                        seed,\n" +
-			"                        GameType.NOT_SET,\n" +
-			"                        false,\n" +
-			"                        false,\n" +
-			"                        WorldType.DEFAULT),\n" +
-			"                DimensionType.OVERWORLD,\n" +
-			"                0,\n" +
-			"                null,\n" +
-			"                null);\n" +
-			"        OverworldBiomeProviderSettings OWSettings = BiomeProviderType.VANILLA_LAYERED\n" +
-			"                .createSettings(world.getWorldInfo())\n" +
-			"                .setGeneratorSettings(new OverworldGenSettings());\n" +
-			"        OverworldChunkGenerator overworldChunkGenerator=new OverworldChunkGenerator(world,BiomeProviderType.VANILLA_LAYERED.create(OWSettings),new OverworldGenSettings());\n" +
-			"        int size = 128;\n" +
-			"        Random r = new Random(21382138983289132L);\n" +
-			"        boolean PRINT = false;\n" +
-			"        if (PRINT) System.out.println(\"{\");\n" +
-			"        long hash = 0;\n" +
-			"        for (int i = 0; i < size; i++) {\n" +
-			"            for (int j = 0; j < size; j++) {\n" +
-			"                int x = r.nextInt(512000)-25600;\n" +
-			"                int z = r.nextInt(512000)-25600;\n" +
-			"                int y = overworldChunkGenerator.getHeightOnGround(x, z, Heightmap.Type.OCEAN_FLOOR_WG);\n" +
-			"                hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;\n" +
-			"                if (PRINT) System.out.printf(\"%d ,\", y);\n" +
-			"\n" +
-			"            }\n" +
-			"            if (PRINT) System.out.println();\n" +
-			"        }\n" +
-			"        if (PRINT) System.out.print(\"};\");\n" +
-			"        if (PRINT) System.out.println();\n" +
-			"        if (!PRINT) System.out.println(hash+\"L\");");
-	}
+	//	public static HashMap<Integer, BlockState[][][]> hashMap = new HashMap<>();
+	//
+	//	public static int processChunk(int x, int z, AbstractChunkGenerator<?> chunkGenerator) {
+	//		int cx = x >> 4;
+	//		int cz = z >> 4;
+	//		BlockState[][][] chunk = hashMap.computeIfAbsent(((cx & 0xffff) << 16) | (cz & 0xffff), e -> {
+	//			BlockState[][][] blockStates = new BlockState[16][chunkGenerator.getMaxHeight()][16];
+	//			chunkGenerator.setBlocksInChunk(cx, cz, blockStates);
+	//			return blockStates;
+	//		});
+	//		BlockState[][] xPart = chunk[x & 0xf];
+	//		List<BlockState> column = Arrays.stream(xPart).map(e -> e[z & 0xf]).collect(Collectors.toList());
+	//		Predicate<BlockState> predicate = blockState -> blockState == chunkGenerator.getDefaultBlock();
+	//		int y;
+	//		for (y = column.size() - 1; y >= 0; y--) {
+	//			if (predicate.test(column.get(y))) break; ;
+	//		}
+	//		// onground
+	//		return y + 1;
+	//	}
+	//
+	//	public static void main(String[] args) {
+	//		Bootstrap.register();
+	//		long seed = 1232903292041L;
+	//
+	//		World world = new WorldClient(null,
+	//				new WorldSettings(seed, GameType.NOT_SET, true, false, WorldType.DEFAULT),
+	//				DimensionType.OVERWORLD, EnumDifficulty.EASY, null);
+	//		OverworldDimension overworldDimension = new OverworldDimension();
+	//		overworldDimension.setWorld(world);
+	//		ChunkGeneratorOverworld chunkGeneratorOverworld = (ChunkGeneratorOverworld) overworldDimension.createChunkGenerator();
+	//
+	//		world = new WorldClient(null,
+	//				new WorldSettings(seed, GameType.NOT_SET, true, false, WorldType.DEFAULT),
+	//				DimensionType.THE_END, EnumDifficulty.EASY, null);
+	//		EndDimension endDimension = new EndDimension();
+	//		endDimension.setWorld(world);
+	//		ChunkGeneratorEnd chunkGeneratorEnd = (ChunkGeneratorEnd) endDimension.createChunkGenerator();
+	//
+	//		world = new WorldClient(null,
+	//				new WorldSettings(seed, GameType.NOT_SET, true, false, WorldType.DEFAULT),
+	//				DimensionType.NETHER, EnumDifficulty.EASY, null);
+	//		NetherDimension netherDimension = new NetherDimension();
+	//		netherDimension.setWorld(world);
+	//		ChunkGeneratorNether chunkGeneratorNether = (ChunkGeneratorNether) netherDimension.createChunkGenerator();
+	//
+	//		AbstractChunkGenerator<?> chunkGenerator = chunkGeneratorOverworld;
+	//		int yy=processChunk(369016,101544,chunkGenerator);
+	//		int size = 128;
+	//		Random r = new Random(21382138983289132L);
+	//		boolean PRINT = false;
+	//		if (PRINT) System.out.println("{");
+	//		long hash = 0;
+	//
+	//		for (int i = 0; i < size; i++) {
+	//			for (int j = 0; j < size; j++) {
+	//				int x = r.nextInt(512000) - 25600;
+	//				int z = r.nextInt(512000) - 25600;
+	//				int y = processChunk(x, z, chunkGenerator);
+	//				hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;
+	//				if (PRINT) System.out.printf("%d ,", y);
+	//			}
+	//			if (PRINT) System.out.println();
+	//		}
+	//		if (PRINT) System.out.print("};");
+	//		if (PRINT) System.out.println();
+	//		if (!PRINT) System.out.println(hash + "L");
 }
