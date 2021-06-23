@@ -30,7 +30,7 @@ public abstract class TerrainGenerator {
 		if(this.version.isOlderThan(MCVersion.v1_8)) {
 			throw new UnsupportedVersion(this.version, "chunk generator");
 		}
-		if(this.version.isOlderThan(MCVersion.v1_12)) {
+		if(this.version.isOlderThan(MCVersion.v1_11)) {
 			System.err.println("WARNING THIS VERSION IS UNTESTED YET");
 		}
 	}

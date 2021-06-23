@@ -138,7 +138,6 @@ public class Overworld {
 	//                int y = processChunk(x, z, chunkGenerator,state);
 	//                hash = hash * 0xFF51AFD7ED558CCDL + 0xC4CEB9FE1A85EC53L | y;
 	//                if (PRINT) System.out.printf("%d ,", y);
-	//                System.out.println(hash+" "+y+" "+x+" "+z);
 	//            }
 	//            if (PRINT) System.out.println();
 	//        }
