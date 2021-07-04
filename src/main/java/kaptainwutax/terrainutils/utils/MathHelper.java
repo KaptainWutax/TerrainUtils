@@ -23,4 +23,11 @@ public class MathHelper {
 			return Math.min(value, max);
 		}
 	}
+	public static double fastInvSqrt(double d) {
+		double half = 0.5D * d;
+		long bits = Double.doubleToRawLongBits(d);
+		bits = 6910469410427058090L - (bits >> 1);
+		d = Double.longBitsToDouble(bits);
+		return d * (1.5D - half * d * d);
+	}
 }

@@ -120,6 +120,11 @@ public abstract class TerrainGenerator {
 	public abstract Block[] getColumnAt(int x, int z);
 
 	/**
+	 * Compute the column and replace the blocks with their biomes counterpart
+	 */
+	public abstract Block[] getBiomeColumnAt(int x,int z);
+
+	/**
 	 * Returns the block at x,y,z, this block can be 3 blocks tops, default block, default fluid and air
 	 */
 	public abstract Block getBlockAt(int x, int y, int z);

@@ -6,7 +6,10 @@ import kaptainwutax.mcutils.block.Block;
 import kaptainwutax.mcutils.block.Blocks;
 import kaptainwutax.mcutils.rand.ChunkRand;
 import kaptainwutax.mcutils.state.Dimension;
+import kaptainwutax.mcutils.util.block.BlockBox;
+import kaptainwutax.mcutils.util.data.Pair;
 import kaptainwutax.mcutils.util.data.Triplet;
+import kaptainwutax.mcutils.util.pos.BPos;
 import kaptainwutax.mcutils.version.MCVersion;
 import kaptainwutax.noiseutils.noise.NoiseSampler;
 import kaptainwutax.noiseutils.perlin.OctavePerlinNoiseSampler;
@@ -18,23 +21,34 @@ import kaptainwutax.terrainutils.TerrainGenerator;
 import kaptainwutax.terrainutils.utils.NoiseSettings;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import static kaptainwutax.noiseutils.utils.MathHelper.maintainPrecision;
-import static kaptainwutax.terrainutils.utils.MathHelper.*;
+import static kaptainwutax.terrainutils.utils.MathHelper.clamp;
+import static kaptainwutax.terrainutils.utils.MathHelper.clampedLerp;
+import static kaptainwutax.terrainutils.utils.MathHelper.sqrt;
 
 public abstract class SurfaceGenerator extends TerrainGenerator {
 
-	protected static final float[] BIOME_WEIGHT_TABLE;
+	protected static final float[] BIOME_WEIGHT_TABLE = new float[25];
+	protected static final float[] BEARD_KERNEL = new float[13824];
 
 	static {
-		BIOME_WEIGHT_TABLE = new float[25];
 		for(int rx = -2; rx <= 2; ++rx) {
 			for(int rz = -2; rz <= 2; ++rz) {
 				float f = 10.0F / sqrt((float)(rx * rx + rz * rz) + 0.2F);
 				BIOME_WEIGHT_TABLE[rx + 2 + (rz + 2) * 5] = f;
+			}
+		}
+		for(int i = 0; i < 24; ++i) {
+			for(int j = 0; j < 24; ++j) {
+				for(int k = 0; k < 24; ++k) {
+					BEARD_KERNEL[i * 24 * 24 + j * 24 + k] = (float)computeContribution(j - 12, k - 12, i - 12);
+				}
 			}
 		}
 	}
@@ -56,6 +70,7 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	private final double densityOffset;
 	private final Map<Long, double[]> noiseColumnCache = new HashMap<>();
 	private final Map<Long, Block[]> columnCache = new HashMap<>();
+	private final Map<Long, Block[]> biomeColumnCache = new HashMap<>();
 	private final int worldHeight;
 
 	private static final LCG SCALE_ADVANCE = LCG.JAVA.combine(2620);
@@ -289,17 +304,17 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 			double noise = clampedLerp(minNoise, maxNoise, mainNoise) - fallOff;
 			if(y > sizeY) {
 				double offset = (float)(y - sizeY) / (float)this.noiseSettings.topSlideSettings.size;
-				if (getDimension()==Dimension.END){
+				if(getDimension() == Dimension.END) {
 					offset = clamp(offset, 0.0D, 1.0D);
 				}
 				noise = noise * (1.0D - offset) + this.noiseSettings.topSlideSettings.target * offset;
 			}
-			if ((double)y < getMinNoiseY()){
-				if (getDimension()==Dimension.NETHER){
+			if((double)y < getMinNoiseY()) {
+				if(getDimension() == Dimension.NETHER) {
 					double offset = (getMinNoiseY() - (double)y) / 4.0D;
 					offset = clamp(offset, 0.0D, 1.0D);
 					noise = noise * (1.0D - offset) - 10.0D * offset;
-				}else if (getDimension()==Dimension.END){
+				} else if(getDimension() == Dimension.END) {
 					double offset = (float)((int)getMinNoiseY() - y) / ((float)getMinNoiseY() - 1.0F);
 					noise = noise * (1.0D - offset) - 30.0D * offset;
 				}
@@ -367,9 +382,24 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		} else {
 			assert getWorldHeight() == (this.noiseSizeY * this.chunkHeight);
 			Block[] buffer = new Block[this.getWorldHeight()];
-			int y = this.generateColumn(buffer, x, z, null);
+			int y = this.generateColumn(buffer, x, z, null,null,null);
 			assert y == 0;
 			columnCache.put(key, buffer);
+			return buffer;
+		}
+	}
+
+	public Block[] getBiomeColumnAt(int x, int z) {
+		long key = ((((long)x) & 0xFFFFFFFFL) << 32) | (((long)z) & 0xFFFFFFFFL);
+		if(biomeColumnCache.containsKey(key)) {
+			return biomeColumnCache.get(key);
+		} else {
+			assert getWorldHeight() == (this.noiseSizeY * this.chunkHeight);
+			Block[] buffer = new Block[this.getWorldHeight()];
+			int y = this.generateColumn(buffer, x, z, null,null,null);
+			this.replaceBiomeBlocks(buffer, x, z);
+			assert y == 0;
+			biomeColumnCache.put(key, buffer);
 			return buffer;
 		}
 	}
@@ -382,7 +412,82 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		return getColumnAt(x, z)[y];
 	}
 
-	public int generateColumn(Block[] buffer, int x, int z, Predicate<Block> blockPredicate) {
+	public void generateHulk(Block[] buffer, int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
+		// those are the coordinates of the region in the grid chosen
+		int cellX = Math.floorDiv(x, this.chunkWidth);
+		int cellZ = Math.floorDiv(z, this.chunkWidth);
+		// those are the coordinates in the chosen region
+		int posX = Math.floorMod(x, this.chunkWidth);
+		int posZ = Math.floorMod(z, this.chunkWidth);
+		System.out.println(x + " " + (posX + cellX * this.chunkWidth));
+		double percentX = (double)posX / (double)this.chunkWidth;
+		double percentZ = (double)posZ / (double)this.chunkWidth;
+		double[][] ds = new double[][] {
+			this.sampleNoiseColumn(cellX, cellZ),
+			this.sampleNoiseColumn(cellX, cellZ + 1),
+			this.sampleNoiseColumn(cellX + 1, cellZ),
+			this.sampleNoiseColumn(cellX + 1, cellZ + 1)
+		};
+		for(int cellY = this.noiseSizeY - 1; cellY >= 0; --cellY) {
+			double xyz = ds[0][cellY];
+			double xyz1 = ds[1][cellY];
+			double x1yz = ds[2][cellY];
+			double x1yz1 = ds[3][cellY];
+			double xy1z = ds[0][cellY + 1];
+			double xy1z1 = ds[1][cellY + 1];
+			double x1y1z = ds[2][cellY + 1];
+			double x1y1z1 = ds[3][cellY + 1];
+			for(int posY = this.chunkHeight - 1; posY >= 0; --posY) {
+				int y = (cellX * this.chunkHeight) + posY;
+				double percentY = (double)posY / (double)this.chunkHeight;
+				// this is not a bug, mojang does not respect order
+				double noise = MathHelper.lerp3(percentY, percentX, percentZ, xyz, xy1z, x1yz, x1y1z, xyz1, xy1z1, x1yz1, x1y1z1);
+				noise = kaptainwutax.terrainutils.utils.MathHelper.clamp(noise / 200.0D, -1.0D, 1.0D);
+				noise = noise / 2.0D - noise * noise * noise / 24.0D;
+				for(Pair<Supplier<Integer>, BlockBox> jigsawBox : jigsawBoxes) {
+					BlockBox box = jigsawBox.getSecond();
+					int localX = Math.max(0, Math.max(box.minX - x, x - box.maxX));
+					int localY = y - (box.minY + (jigsawBox.getFirst() != null ? jigsawBox.getFirst().get() : 0));
+					int localZ = Math.max(0, Math.max(box.minZ - z, z - box.maxZ));
+					noise += getContribution(localX, localY, localZ) * 0.8D;
+				}
+				for(BPos junction : jigsawJunction) {
+					int localX = x - junction.getX();
+					int localY = y - junction.getY();
+					int localZ = z - junction.getZ();
+					noise += getContribution(localX, localY, localZ) * 0.4D;
+				}
+				Block block = this.getBlockFromNoise(noise, y);
+				buffer[y] = block;
+			}
+		}
+	}
+
+	public void replaceBiomeBlocks(Block[] buffer, int x, int z) {
+
+
+	}
+
+	public double applyJigsawToNoise(double noise, BPos bPos, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
+		noise = kaptainwutax.terrainutils.utils.MathHelper.clamp(noise / 200.0D, -1.0D, 1.0D);
+		noise = noise / 2.0D - noise * noise * noise / 24.0D;
+		for(Pair<Supplier<Integer>, BlockBox> jigsawBox : jigsawBoxes) {
+			BlockBox box = jigsawBox.getSecond();
+			int localX = Math.max(0, Math.max(box.minX - bPos.getX(), bPos.getX() - box.maxX));
+			int localY = bPos.getY() - (box.minY + (jigsawBox.getFirst() != null ? jigsawBox.getFirst().get() : 0));
+			int localZ = Math.max(0, Math.max(box.minZ - bPos.getZ(), bPos.getZ() - box.maxZ));
+			noise += getContribution(localX, localY, localZ) * 0.8D;
+		}
+		for(BPos junction : jigsawJunction) {
+			int localX = bPos.getX() - junction.getX();
+			int localY = bPos.getY() - junction.getY();
+			int localZ = bPos.getZ() - junction.getZ();
+			noise += getContribution(localX, localY, localZ) * 0.4D;
+		}
+		return noise;
+	}
+
+	public int generateColumn(Block[] buffer, int x, int z, Predicate<Block> blockPredicate, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
 		// those are the coordinates of the region in the grid chosen
 		int cellX = Math.floorDiv(x, this.chunkWidth);
 		int cellZ = Math.floorDiv(z, this.chunkWidth);
@@ -413,6 +518,9 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 				// this is not a bug, mojang does not respect order
 				double noise = MathHelper.lerp3(percentY, percentX, percentZ, xyz, xy1z, x1yz, x1y1z, xyz1, xy1z1, x1yz1, x1y1z1);
 				int y = cellY * this.chunkHeight + posY;
+				if(jigsawBoxes != null && jigsawJunction != null) {
+					noise = applyJigsawToNoise(noise, new BPos(x, y, z), jigsawBoxes, jigsawJunction);
+				}
 				Block block = this.getBlockFromNoise(noise, y);
 				// we assume you actually have correctly filled the buffer
 				if(buffer != null) {
@@ -428,12 +536,12 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 
 	@Override
 	public int getHeightOnGround(int x, int z) {
-		return this.generateColumn(null, x, z, (block) -> block == this.getDefaultBlock());
+		return this.generateColumn(null, x, z, (block) -> block == this.getDefaultBlock(),null,null);
 	}
 
 	@Override
 	public int getFirstHeightInColumn(int x, int z, Predicate<Block> predicate) {
-		return this.generateColumn(null, x, z, predicate);
+		return this.generateColumn(null, x, z, predicate,null,null);
 	}
 
 	protected double[] getDepthAndScale(int x, int z) {
@@ -549,5 +657,28 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		return block;
 	}
 
+	private static double getContribution(int x, int y, int z) {
+		int offX = x + 12;
+		int offY = y + 12;
+		int offZ = z + 12;
+		if(offX >= 0 && offX < 24) {
+			if(offY >= 0 && offY < 24) {
+				return offZ >= 0 && offZ < 24 ? (double)BEARD_KERNEL[offZ * 24 * 24 + offX * 24 + offY] : 0.0D;
+			} else {
+				return 0.0D;
+			}
+		} else {
+			return 0.0D;
+		}
+	}
+
+	private static double computeContribution(int x, int y, int z) {
+		double d0 = x * x + z * z;
+		double d1 = (double)y + 0.5D;
+		double d2 = d1 * d1;
+		double d3 = Math.pow(Math.E, -(d2 / 16.0D + d0 / 16.0D));
+		double d4 = -d1 * kaptainwutax.terrainutils.utils.MathHelper.fastInvSqrt(d2 / 2.0D + d0 / 2.0D) / 2.0D;
+		return d4 * d3;
+	}
 
 }
