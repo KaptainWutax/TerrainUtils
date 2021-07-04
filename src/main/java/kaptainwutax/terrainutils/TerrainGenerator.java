@@ -45,12 +45,6 @@ public abstract class TerrainGenerator {
 		return this;
 	}
 
-	public static void main(String[] args) {
-		BiomeSource bs = BiomeSource.of(Dimension.NETHER, MCVersion.v1_13_2, 1232903292041L);
-		TerrainGenerator cg = TerrainGenerator.of(Dimension.NETHER, bs);
-		cg.sampleNoiseColumnOld(null,50688,288,0,0);
-	}
-
 	public static Factory factory(Dimension dimension) {
 		if(dimension == Dimension.OVERWORLD) return OverworldTerrainGenerator::new;
 		else if(dimension == Dimension.NETHER) return NetherTerrainGenerator::new;

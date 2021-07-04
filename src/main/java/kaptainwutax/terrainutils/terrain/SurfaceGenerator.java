@@ -408,7 +408,7 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 
 	public Block[] getBiomeColumnAt(int x, int z) {
 		return biomeColumnCache.computeIfAbsent(getKey(x, z),
-			k -> this.generateBiomeColumnBefore(x, z, this::getBiomeColumnAt, this.biomeColumnCache, this.chunkSeeds)
+			k -> this.generateBiomeColumnBefore(x, z, this::getColumnAt, this.biomeColumnCache, this.chunkSeeds)
 		);
 	}
 
@@ -422,17 +422,17 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 
 	@Override
 	public Block[] getBedrockColumnAt(int x, int z) {
-		applyBedrock(x,z,this::getBiomeColumnAt,this.biomeColumnCache,this.chunkSeeds);
-		return this.biomeColumnCache.get(this.getKey(x,z));
+		applyBedrock(x, z, this::getBiomeColumnAt, this.biomeColumnCache, this.chunkSeeds);
+		return this.biomeColumnCache.get(this.getKey(x, z));
 	}
 
 	@Override
 	public Block[] getBedrockColumnAt(int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
-		applyBedrock(x,z,this::getBiomeColumnAt,this.jigsawColumnCache,this.jigsawChunkSeeds);
-		return this.jigsawColumnCache.get(this.getKey(x,z));
+		applyBedrock(x, z, this::getBiomeColumnAt, this.jigsawColumnCache, this.jigsawChunkSeeds);
+		return this.jigsawColumnCache.get(this.getKey(x, z));
 	}
 
-	public void applyBedrock(int x, int z,  BiFunction<Integer, Integer, Block[]> columnProvider, Map<Long, Block[]> cacheProvider, Map<Long, Long> seedProvider) {
+	public void applyBedrock(int x, int z, BiFunction<Integer, Integer, Block[]> columnProvider, Map<Long, Block[]> cacheProvider, Map<Long, Long> seedProvider) {
 		int chunkX = x >> 4;
 		int chunkZ = z >> 4;
 		int maxChunkX = (chunkX << 4) + 15;
@@ -469,7 +469,7 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 							}
 						}
 					}
-					cacheProvider.put(getKey(chunkX + X, chunkZ + Z),buffer);
+					cacheProvider.put(getKey(chunkX + X, chunkZ + Z), buffer);
 				}
 			}
 		}
@@ -496,7 +496,7 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	 * @param rand   the specific rand for this column
 	 */
 	private void replaceBiomeBlocks(Block[] buffer, int x, int z, ChunkRand rand) {
-		int y = this.getHeightOnGround(x, z);
+		int y = (int)kaptainwutax.terrainutils.utils.MathHelper.clamp(this.getHeightOnGround(x, z), this.getMinWorldHeight(),this.getMaxWorldHeight()-1);
 		double noise = this.surfaceDepthNoise.sample((double)x * 0.0625D, (double)z * 0.0625D, 0.0625D, (double)(x & 15) * 0.0625D) * 15.0D;
 		Biome biome = this.biomeSource.getBiome(x, y, z);
 		biome.getSurfaceBuilder().applyToColumn(this.getBiomeSource(), rand, buffer, biome, x, z, y, 0, noise,
