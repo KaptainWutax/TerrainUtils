@@ -4,13 +4,18 @@ import kaptainwutax.biomeutils.source.BiomeSource;
 import kaptainwutax.mcutils.block.Block;
 import kaptainwutax.mcutils.block.Blocks;
 import kaptainwutax.mcutils.state.Dimension;
+import kaptainwutax.mcutils.util.block.BlockBox;
+import kaptainwutax.mcutils.util.data.Pair;
+import kaptainwutax.mcutils.util.pos.BPos;
 import kaptainwutax.mcutils.version.MCVersion;
 import kaptainwutax.mcutils.version.UnsupportedVersion;
 import kaptainwutax.terrainutils.terrain.EndTerrainGenerator;
 import kaptainwutax.terrainutils.terrain.NetherTerrainGenerator;
 import kaptainwutax.terrainutils.terrain.OverworldTerrainGenerator;
 
+import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public abstract class TerrainGenerator {
 
@@ -120,9 +125,22 @@ public abstract class TerrainGenerator {
 	public abstract Block[] getColumnAt(int x, int z);
 
 	/**
-	 * Compute the column and replace the blocks with their biomes counterpart
+	 * Returns the block column at x,z of length: worldHeight, this column has 3 blocks tops, default block, default fluid and air
+	 * You must provide the jigsaw application for it to return the correct results, use #getColumnAt(x,z) if not.
+	 */
+	public abstract Block[] getColumnAt(int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction);
+
+	/**
+	 * Compute the column and replace the blocks with their biomes counterpart,
+	 * warning this implementation use the non jigsaw hulk and will not be accurate for those (1.14+)
 	 */
 	public abstract Block[] getBiomeColumnAt(int x,int z);
+
+	/**
+	 * Compute the column and replace the blocks with their biomes counterpart,
+	 * accounting for jigsaw shennanigans
+	 */
+	public abstract Block[] getBiomeColumnAt(int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction);
 
 	/**
 	 * Returns the block at x,y,z, this block can be 3 blocks tops, default block, default fluid and air

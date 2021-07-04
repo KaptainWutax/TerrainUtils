@@ -23,14 +23,13 @@ import kaptainwutax.terrainutils.utils.NoiseSettings;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import static kaptainwutax.noiseutils.utils.MathHelper.maintainPrecision;
-import static kaptainwutax.terrainutils.utils.MathHelper.clamp;
-import static kaptainwutax.terrainutils.utils.MathHelper.clampedLerp;
-import static kaptainwutax.terrainutils.utils.MathHelper.sqrt;
+import static kaptainwutax.terrainutils.utils.MathHelper.*;
 
 public abstract class SurfaceGenerator extends TerrainGenerator {
 
@@ -70,7 +69,11 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	private final double densityOffset;
 	private final Map<Long, double[]> noiseColumnCache = new HashMap<>();
 	private final Map<Long, Block[]> columnCache = new HashMap<>();
+	private final Map<Long, Block[]> jigsawColumnCache = new HashMap<>();
 	private final Map<Long, Block[]> biomeColumnCache = new HashMap<>();
+	private final Map<Long, Block[]> biomeJigsawColumnCache = new HashMap<>();
+	private final Map<Long, Long> chunkSeeds = new HashMap<>();
+	private final Map<Long, Long> jigsawChunkSeeds = new HashMap<>();
 	private final int worldHeight;
 
 	private static final LCG SCALE_ADVANCE = LCG.JAVA.combine(2620);
@@ -376,32 +379,43 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	}
 
 	public Block[] getColumnAt(int x, int z) {
-		long key = ((((long)x) & 0xFFFFFFFFL) << 32) | (((long)z) & 0xFFFFFFFFL);
-		if(columnCache.containsKey(key)) {
-			return columnCache.get(key);
-		} else {
+		return columnCache.computeIfAbsent(getKey(x, z), k -> {
 			assert getWorldHeight() == (this.noiseSizeY * this.chunkHeight);
 			Block[] buffer = new Block[this.getWorldHeight()];
-			int y = this.generateColumn(buffer, x, z, null,null,null);
+			int y = this.generateColumn(buffer, x, z, null, null, null);
 			assert y == 0;
-			columnCache.put(key, buffer);
 			return buffer;
-		}
+		});
+	}
+
+	@Override
+	public Block[] getColumnAt(int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
+		if(jigsawBoxes == null || jigsawJunction == null) return null;
+		return jigsawColumnCache.computeIfAbsent(getKey(x, z), k -> {
+			assert getWorldHeight() == (this.noiseSizeY * this.chunkHeight);
+			Block[] buffer = new Block[this.getWorldHeight()];
+			int y = this.generateColumn(buffer, x, z, null, jigsawBoxes, jigsawJunction);
+			assert y == 0;
+			return buffer;
+		});
 	}
 
 	public Block[] getBiomeColumnAt(int x, int z) {
-		long key = ((((long)x) & 0xFFFFFFFFL) << 32) | (((long)z) & 0xFFFFFFFFL);
-		if(biomeColumnCache.containsKey(key)) {
-			return biomeColumnCache.get(key);
-		} else {
-			assert getWorldHeight() == (this.noiseSizeY * this.chunkHeight);
-			Block[] buffer = new Block[this.getWorldHeight()];
-			int y = this.generateColumn(buffer, x, z, null,null,null);
-			this.replaceBiomeBlocks(buffer, x, z);
-			assert y == 0;
-			biomeColumnCache.put(key, buffer);
-			return buffer;
-		}
+		return biomeColumnCache.computeIfAbsent(getKey(x, z),
+			k -> this.generateBiomeColumnBefore(x, z, this::getBiomeColumnAt, this.biomeColumnCache, this.chunkSeeds)
+		);
+	}
+
+	@Override
+	public Block[] getBiomeColumnAt(int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
+		if(jigsawBoxes == null || jigsawJunction == null) return null;
+		return jigsawColumnCache.computeIfAbsent(getKey(x, z),
+			k -> this.generateBiomeColumnBefore(x, z, (posX, posZ) -> this.getColumnAt(posX, posZ, jigsawBoxes, jigsawJunction), this.jigsawColumnCache, this.jigsawChunkSeeds)
+		);
+	}
+
+	private long getKey(int x, int z) {
+		return ((((long)x) & 0xFFFFFFFFL) << 32) | (((long)z) & 0xFFFFFFFFL);
 	}
 
 	public Block getBlockAt(int x, int y, int z) {
@@ -412,60 +426,61 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		return getColumnAt(x, z)[y];
 	}
 
-	public void generateHulk(Block[] buffer, int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
-		// those are the coordinates of the region in the grid chosen
-		int cellX = Math.floorDiv(x, this.chunkWidth);
-		int cellZ = Math.floorDiv(z, this.chunkWidth);
-		// those are the coordinates in the chosen region
-		int posX = Math.floorMod(x, this.chunkWidth);
-		int posZ = Math.floorMod(z, this.chunkWidth);
-		System.out.println(x + " " + (posX + cellX * this.chunkWidth));
-		double percentX = (double)posX / (double)this.chunkWidth;
-		double percentZ = (double)posZ / (double)this.chunkWidth;
-		double[][] ds = new double[][] {
-			this.sampleNoiseColumn(cellX, cellZ),
-			this.sampleNoiseColumn(cellX, cellZ + 1),
-			this.sampleNoiseColumn(cellX + 1, cellZ),
-			this.sampleNoiseColumn(cellX + 1, cellZ + 1)
-		};
-		for(int cellY = this.noiseSizeY - 1; cellY >= 0; --cellY) {
-			double xyz = ds[0][cellY];
-			double xyz1 = ds[1][cellY];
-			double x1yz = ds[2][cellY];
-			double x1yz1 = ds[3][cellY];
-			double xy1z = ds[0][cellY + 1];
-			double xy1z1 = ds[1][cellY + 1];
-			double x1y1z = ds[2][cellY + 1];
-			double x1y1z1 = ds[3][cellY + 1];
-			for(int posY = this.chunkHeight - 1; posY >= 0; --posY) {
-				int y = (cellX * this.chunkHeight) + posY;
-				double percentY = (double)posY / (double)this.chunkHeight;
-				// this is not a bug, mojang does not respect order
-				double noise = MathHelper.lerp3(percentY, percentX, percentZ, xyz, xy1z, x1yz, x1y1z, xyz1, xy1z1, x1yz1, x1y1z1);
-				noise = kaptainwutax.terrainutils.utils.MathHelper.clamp(noise / 200.0D, -1.0D, 1.0D);
-				noise = noise / 2.0D - noise * noise * noise / 24.0D;
-				for(Pair<Supplier<Integer>, BlockBox> jigsawBox : jigsawBoxes) {
-					BlockBox box = jigsawBox.getSecond();
-					int localX = Math.max(0, Math.max(box.minX - x, x - box.maxX));
-					int localY = y - (box.minY + (jigsawBox.getFirst() != null ? jigsawBox.getFirst().get() : 0));
-					int localZ = Math.max(0, Math.max(box.minZ - z, z - box.maxZ));
-					noise += getContribution(localX, localY, localZ) * 0.8D;
-				}
-				for(BPos junction : jigsawJunction) {
-					int localX = x - junction.getX();
-					int localY = y - junction.getY();
-					int localZ = z - junction.getZ();
-					noise += getContribution(localX, localY, localZ) * 0.4D;
-				}
-				Block block = this.getBlockFromNoise(noise, y);
-				buffer[y] = block;
-			}
-		}
+	/**
+	 * Replace the block in the column buffer, warning this function only work with a specifically seeded rand
+	 *
+	 * @param buffer the block buffer from the hulk
+	 * @param x      the x world position
+	 * @param z      the z world position
+	 * @param rand   the specific rand for this column
+	 */
+	private void replaceBiomeBlocks(Block[] buffer, int x, int z, ChunkRand rand) {
+		int y = this.getHeightOnGround(x, z);
+		double noise = this.surfaceDepthNoise.sample((double)x * 0.0625D, (double)z * 0.0625D, 0.0625D, (double)(x & 15) * 0.0625D) * 15.0D;
+		Biome biome = this.biomeSource.getBiome(x, y, z);
+		biome.getSurfaceBuilder().applyToColumn(this.getBiomeSource(), rand, buffer, biome, x, z, y, 0, noise,
+			this.getSeaLevel(), this.getDefaultBlock(), this.getDefaultFluid());
 	}
 
-	public void replaceBiomeBlocks(Block[] buffer, int x, int z) {
-
-
+	/**
+	 * This function generate a full chunk until the position based on a hulk column provider
+	 *
+	 * @param x              the world x position
+	 * @param z              the world z position
+	 * @param columnProvider must be non null and provide a hulk column (based on default fluid and block)
+	 * @param cacheProvider  a cache provider
+	 * @param seedProvider   a seed provider
+	 * @return the block column
+	 */
+	public Block[] generateBiomeColumnBefore(int x, int z, BiFunction<Integer, Integer, Block[]> columnProvider, Map<Long, Block[]> cacheProvider, Map<Long, Long> seedProvider) {
+		int chunkX = x >> 4;
+		int chunkZ = z >> 4;
+		ChunkRand rand = new ChunkRand();
+		rand.setTerrainSeed(chunkX, chunkZ, this.getVersion());
+		int minChunkX = chunkX << 4;
+		int minChunkZ = chunkZ << 4;
+		for(int X = 0; X < 16; X++) {
+			for(int Z = 0; Z < 16; Z++) {
+				int posX = minChunkX + X;
+				int posZ = minChunkZ + Z;
+				long key = this.getKey(posX, posZ);
+				Long seed = seedProvider.get(key);
+				if(seed == null) {
+					assert !cacheProvider.containsKey(key);
+					Block[] buffer = columnProvider.apply(x, z);
+					this.replaceBiomeBlocks(buffer, x, z, rand);
+					cacheProvider.put(key, buffer);
+					seedProvider.put(key, rand.getSeed());
+				} else {
+					rand.setSeed(seed, false);
+				}
+				// if we reached the desired position
+				if(posX == x && posZ == z) {
+					return cacheProvider.get(key);
+				}
+			}
+		}
+		return cacheProvider.get(getKey(x, z));
 	}
 
 	public double applyJigsawToNoise(double noise, BPos bPos, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
@@ -536,12 +551,12 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 
 	@Override
 	public int getHeightOnGround(int x, int z) {
-		return this.generateColumn(null, x, z, (block) -> block == this.getDefaultBlock(),null,null);
+		return this.generateColumn(null, x, z, (block) -> block == this.getDefaultBlock(), null, null);
 	}
 
 	@Override
 	public int getFirstHeightInColumn(int x, int z, Predicate<Block> predicate) {
-		return this.generateColumn(null, x, z, predicate,null,null);
+		return this.generateColumn(null, x, z, predicate, null, null);
 	}
 
 	protected double[] getDepthAndScale(int x, int z) {
