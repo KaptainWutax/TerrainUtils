@@ -29,7 +29,9 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import static kaptainwutax.noiseutils.utils.MathHelper.maintainPrecision;
-import static kaptainwutax.terrainutils.utils.MathHelper.*;
+import static kaptainwutax.terrainutils.utils.MathHelper.clamp;
+import static kaptainwutax.terrainutils.utils.MathHelper.clampedLerp;
+import static kaptainwutax.terrainutils.utils.MathHelper.sqrt;
 
 public abstract class SurfaceGenerator extends TerrainGenerator {
 
@@ -160,6 +162,10 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	public abstract Block getDefaultBlock();
 
 	public abstract Block getDefaultFluid();
+
+	public abstract int getBedrockRoofPosition();
+
+	public abstract int getBedrockFloorPosition();
 
 	public int noiseSizeY() {
 		return this.noiseSizeY + 1;
@@ -412,6 +418,61 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		return jigsawColumnCache.computeIfAbsent(getKey(x, z),
 			k -> this.generateBiomeColumnBefore(x, z, (posX, posZ) -> this.getColumnAt(posX, posZ, jigsawBoxes, jigsawJunction), this.jigsawColumnCache, this.jigsawChunkSeeds)
 		);
+	}
+
+	@Override
+	public Block[] getBedrockColumnAt(int x, int z) {
+		applyBedrock(x,z,this::getBiomeColumnAt,this.biomeColumnCache,this.chunkSeeds);
+		return this.biomeColumnCache.get(this.getKey(x,z));
+	}
+
+	@Override
+	public Block[] getBedrockColumnAt(int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
+		applyBedrock(x,z,this::getBiomeColumnAt,this.jigsawColumnCache,this.jigsawChunkSeeds);
+		return this.jigsawColumnCache.get(this.getKey(x,z));
+	}
+
+	public void applyBedrock(int x, int z,  BiFunction<Integer, Integer, Block[]> columnProvider, Map<Long, Block[]> cacheProvider, Map<Long, Long> seedProvider) {
+		int chunkX = x >> 4;
+		int chunkZ = z >> 4;
+		int maxChunkX = (chunkX << 4) + 15;
+		int maxChunkZ = (chunkZ << 4) + 15;
+		// generate the full chunk
+		this.getBiomeColumnAt(maxChunkX, maxChunkZ);
+		// get the last seed
+		Long seed = seedProvider.get(getKey(maxChunkX, maxChunkZ));
+		// should not fail
+		if(seed == null) return;
+		ChunkRand rand = new ChunkRand(seed, false);
+		int maxFloorBedrock = this.getBedrockFloorPosition();
+		int maxRoofBedrock = this.worldHeight - 1 - this.getBedrockRoofPosition();
+		boolean roofOk = maxRoofBedrock + 4 >= 0 && maxRoofBedrock < this.worldHeight;
+		boolean floorOk = maxFloorBedrock + 4 >= 0 && maxFloorBedrock < this.worldHeight;
+		// we will generate the full chunk because caching the seeds here makes no sense,
+		// the generation of the full chunk takes already 97% of the work
+		if(roofOk || floorOk) {
+			for(int X = 0; X < 16; X++) {
+				for(int Z = 0; Z < 16; Z++) {
+					// should be a cache hit only
+					Block[] buffer = columnProvider.apply(chunkX + X, chunkZ + Z);
+					if(roofOk) {
+						for(int y = 0; y < 5; y++) {
+							if(y <= rand.nextInt(5)) {
+								buffer[maxRoofBedrock - y] = Blocks.BEDROCK;
+							}
+						}
+					}
+					if(floorOk) {
+						for(int y = 4; y >= 0; y--) {
+							if(y <= rand.nextInt(5)) {
+								buffer[maxFloorBedrock + y] = Blocks.BEDROCK;
+							}
+						}
+					}
+					cacheProvider.put(getKey(chunkX + X, chunkZ + Z),buffer);
+				}
+			}
+		}
 	}
 
 	private long getKey(int x, int z) {

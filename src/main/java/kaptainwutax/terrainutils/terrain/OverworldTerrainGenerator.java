@@ -31,4 +31,16 @@ public class OverworldTerrainGenerator extends SurfaceGenerator {
 	public Block getDefaultFluid() {
 		return Blocks.WATER;
 	}
+
+	@Override
+	public int getBedrockRoofPosition() {
+		return -10;
+	}
+
+	@Override
+	public int getBedrockFloorPosition() {
+		return 0;
+	}
+
+
 }

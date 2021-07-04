@@ -36,6 +36,16 @@ public class EndTerrainGenerator extends SurfaceGenerator {
 	}
 
 	@Override
+	public int getBedrockRoofPosition() {
+		return -10;
+	}
+
+	@Override
+	public int getBedrockFloorPosition() {
+		return -10;
+	}
+
+	@Override
 	public Dimension getDimension() {
 		return Dimension.END;
 	}

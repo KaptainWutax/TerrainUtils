@@ -143,6 +143,18 @@ public abstract class TerrainGenerator {
 	public abstract Block[] getBiomeColumnAt(int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction);
 
 	/**
+	 * Compute the column and replace the lower part with the bedrock (aka as a full surface chunk)
+	 * warning this is the non jigsaw one for 1.13- version, also this will generate a FULL chunk (can not do otherwise)
+	 */
+	public abstract Block[] getBedrockColumnAt(int x,int z);
+
+	/**
+	 * Compute the column and replace the lower part with the bedrock (aka as a full surface chunk)
+	 * warning this is the jigsaw one for 1.14+ version, also this will generate a FULL chunk (can not do otherwise)
+	 */
+	public abstract Block[] getBedrockColumnAt(int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction);
+
+	/**
 	 * Returns the block at x,y,z, this block can be 3 blocks tops, default block, default fluid and air
 	 */
 	public abstract Block getBlockAt(int x, int y, int z);

@@ -49,6 +49,16 @@ public class NetherTerrainGenerator extends SurfaceGenerator {
 	}
 
 	@Override
+	public int getBedrockRoofPosition() {
+		return 0;
+	}
+
+	@Override
+	public int getBedrockFloorPosition() {
+		return 0;
+	}
+
+	@Override
 	protected double computeNoiseFalloff(double depth, double scale, int y) {
 		return this.getVersion().isNewerOrEqualTo(MCVersion.v1_16) ? super.computeNoiseFalloff(depth, scale, y) : fallOffTable[y];
 	}
