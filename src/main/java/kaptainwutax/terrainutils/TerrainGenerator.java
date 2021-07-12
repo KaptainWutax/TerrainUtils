@@ -14,6 +14,7 @@ import kaptainwutax.terrainutils.terrain.NetherTerrainGenerator;
 import kaptainwutax.terrainutils.terrain.OverworldTerrainGenerator;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -150,8 +151,18 @@ public abstract class TerrainGenerator {
 
 	/**
 	 * Returns the block at x,y,z, this block can be 3 blocks tops, default block, default fluid and air
+	 * If out of bounds, return Empty.
 	 */
-	public abstract Block getBlockAt(int x, int y, int z);
+	public abstract Optional<Block> getBlockAt(int x, int y, int z);
+
+	/**
+	 * {@link #getBlockAt(int, int, int)}
+	 * @param pos the world position
+	 * @return the block or Empty
+	 */
+	public Optional<Block> getBlockAt(BPos pos){
+		return getBlockAt(pos.getX(),pos.getY(),pos.getZ());
+	}
 
 	@FunctionalInterface
 	public interface Factory {

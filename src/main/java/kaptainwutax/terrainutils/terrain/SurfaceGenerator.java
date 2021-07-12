@@ -23,15 +23,14 @@ import kaptainwutax.terrainutils.utils.NoiseSettings;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import static kaptainwutax.noiseutils.utils.MathHelper.maintainPrecision;
-import static kaptainwutax.terrainutils.utils.MathHelper.clamp;
-import static kaptainwutax.terrainutils.utils.MathHelper.clampedLerp;
-import static kaptainwutax.terrainutils.utils.MathHelper.sqrt;
+import static kaptainwutax.terrainutils.utils.MathHelper.*;
 
 public abstract class SurfaceGenerator extends TerrainGenerator {
 
@@ -479,12 +478,12 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 		return ((((long)x) & 0xFFFFFFFFL) << 32) | (((long)z) & 0xFFFFFFFFL);
 	}
 
-	public Block getBlockAt(int x, int y, int z) {
+	public Optional<Block> getBlockAt(int x, int y, int z) {
 		// long key = ((((long) y) & 0x3fff) << 50)  |((((long) x) & 0x1FFFFFF) << 25) | (((long) z) & 0x1FFFFFF);
-		if(y > this.getMaxWorldHeight() || y < this.getMinWorldHeight()) {
-			throw new UnsupportedOperationException(String.format("Y=%d value outside of [%d;%d]", y, getMinWorldHeight(), getMaxWorldHeight()));
+		if(y < this.getMinWorldHeight() || y > this.getMaxWorldHeight() - 1) {
+			return Optional.empty();
 		}
-		return getColumnAt(x, z)[y];
+		return Optional.of(getColumnAt(x, z)[y]);
 	}
 
 	/**
@@ -496,7 +495,7 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	 * @param rand   the specific rand for this column
 	 */
 	private void replaceBiomeBlocks(Block[] buffer, int x, int z, ChunkRand rand) {
-		int y = (int)kaptainwutax.terrainutils.utils.MathHelper.clamp(this.getHeightOnGround(x, z), this.getMinWorldHeight(),this.getMaxWorldHeight()-1);
+		int y = (int)kaptainwutax.terrainutils.utils.MathHelper.clamp(this.getHeightOnGround(x, z), this.getMinWorldHeight(), this.getMaxWorldHeight() - 1);
 		double noise = this.surfaceDepthNoise.sample((double)x * 0.0625D, (double)z * 0.0625D, 0.0625D, (double)(x & 15) * 0.0625D) * 15.0D;
 		Biome biome = this.biomeSource.getBiome(x, y, z);
 		biome.getSurfaceBuilder().applyToColumn(this.getBiomeSource(), rand, buffer, biome, x, z, y, 0, noise,
