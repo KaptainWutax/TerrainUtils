@@ -406,17 +406,27 @@ public abstract class SurfaceGenerator extends TerrainGenerator {
 	}
 
 	public Block[] getBiomeColumnAt(int x, int z) {
-		return biomeColumnCache.computeIfAbsent(getKey(x, z),
-			k -> this.generateBiomeColumnBefore(x, z, this::getColumnAt, this.biomeColumnCache, this.chunkSeeds)
-		);
+		long key=getKey(x,z);
+		if (biomeColumnCache.containsKey(key)){
+			return biomeColumnCache.get(key);
+		}else{
+			Block[] blocks=this.generateBiomeColumnBefore(x, z, this::getColumnAt, this.biomeColumnCache, this.chunkSeeds);
+			biomeColumnCache.put(key,blocks);
+			return blocks;
+		}
 	}
 
 	@Override
 	public Block[] getBiomeColumnAt(int x, int z, List<Pair<Supplier<Integer>, BlockBox>> jigsawBoxes, List<BPos> jigsawJunction) {
 		if(jigsawBoxes == null || jigsawJunction == null) return null;
-		return jigsawColumnCache.computeIfAbsent(getKey(x, z),
-			k -> this.generateBiomeColumnBefore(x, z, (posX, posZ) -> this.getColumnAt(posX, posZ, jigsawBoxes, jigsawJunction), this.jigsawColumnCache, this.jigsawChunkSeeds)
-		);
+		long key=getKey(x,z);
+		if (biomeJigsawColumnCache.containsKey(key)){
+			return biomeJigsawColumnCache.get(key);
+		}else{
+			Block[] blocks=this.generateBiomeColumnBefore(x, z, (posX, posZ) -> this.getColumnAt(posX, posZ, jigsawBoxes, jigsawJunction), this.biomeJigsawColumnCache, this.jigsawChunkSeeds);
+			biomeJigsawColumnCache.put(key,blocks);
+			return blocks;
+		}
 	}
 
 	@Override
